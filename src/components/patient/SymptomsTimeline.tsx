@@ -1,9 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, AlertTriangle } from "lucide-react";
+import { Plus, AlertTriangle, CalendarIcon, Search, Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { format } from "date-fns";
 
 interface Symptom {
   id: string;
@@ -15,7 +21,7 @@ interface Symptom {
 }
 
 export const SymptomsTimeline = () => {
-  const [symptoms] = useState<Symptom[]>([
+  const [symptoms, setSymptoms] = useState<Symptom[]>([
     {
       id: "1",
       name: "Headache",
@@ -58,6 +64,36 @@ export const SymptomsTimeline = () => {
     }
   ]);
 
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [editingSymptom, setEditingSymptom] = useState<Symptom | null>(null);
+
+  const commonSymptoms = [
+    "Headache", "Nausea", "Fatigue", "Pain", "Fever", "Dizziness", "Cough", 
+    "Chest Pain", "Abdominal Pain", "Back Pain", "Joint Pain", "Shortness of Breath"
+  ];
+
+  const filteredSymptoms = commonSymptoms.filter(symptom =>
+    symptom.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const addSymptom = (symptomName: string, date: Date = new Date()) => {
+    const newSymptom: Symptom = {
+      id: Date.now().toString(),
+      name: symptomName,
+      date,
+      severity: "medium",
+      duration: "Ongoing",
+      notes: ""
+    };
+    setSymptoms([...symptoms, newSymptom].sort((a, b) => a.date.getTime() - b.date.getTime()));
+  };
+
+  const deleteSymptom = (id: string) => {
+    setSymptoms(symptoms.filter(s => s.id !== id));
+  };
+
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case "high": return "bg-destructive text-destructive-foreground";
@@ -75,10 +111,71 @@ export const SymptomsTimeline = () => {
             <AlertTriangle className="h-5 w-5 text-primary" />
             Symptoms Timeline
           </div>
-          <Button size="sm" className="btn-healthcare-primary">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Symptom
-          </Button>
+          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="btn-healthcare-primary">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Symptom
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Add New Symptom</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Date</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start text-left font-normal">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {selectedDate ? format(selectedDate, "PPP") : "Select date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Search Symptoms</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search for symptoms..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <div className="max-h-48 overflow-y-auto space-y-1">
+                    {filteredSymptoms.map((symptom) => (
+                      <Button
+                        key={symptom}
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start"
+                        onClick={() => {
+                          addSymptom(symptom, selectedDate || new Date());
+                          setShowAddDialog(false);
+                          setSelectedDate(undefined);
+                          setSearchQuery("");
+                        }}
+                      >
+                        {symptom}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -91,23 +188,25 @@ export const SymptomsTimeline = () => {
           <TooltipProvider>
             <div className="flex items-center justify-between relative">
               {symptoms.map((symptom, index) => (
-                <Tooltip key={symptom.id}>
-                  <TooltipTrigger asChild>
-                    <div className="flex flex-col items-center cursor-pointer group">
-                      {/* Dot */}
-                      <div className={`w-4 h-4 rounded-full border-2 border-background z-10 transition-all duration-200 group-hover:scale-125 ${getSeverityColor(symptom.severity)}`}></div>
-                      
-                      {/* Label */}
-                      <div className="mt-3 text-center">
-                        <p className="text-xs font-medium text-foreground truncate max-w-16">
-                          {symptom.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {symptom.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </p>
-                      </div>
-                    </div>
-                  </TooltipTrigger>
+                <ContextMenu key={symptom.id}>
+                  <ContextMenuTrigger>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex flex-col items-center cursor-pointer group hover:bg-white hover:rounded-lg hover:p-2 hover:-m-2 transition-all duration-200">
+                          {/* Dot */}
+                          <div className="w-4 h-4 rounded-full border-2 border-background z-10 transition-all duration-200 group-hover:scale-125 bg-primary text-primary-foreground"></div>
+                          
+                          {/* Label */}
+                          <div className="mt-3 text-center">
+                            <p className="text-xs font-medium text-foreground truncate max-w-16">
+                              {symptom.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {symptom.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </p>
+                          </div>
+                        </div>
+                      </TooltipTrigger>
                   <TooltipContent className="max-w-64">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
@@ -130,17 +229,38 @@ export const SymptomsTimeline = () => {
                     </div>
                   </TooltipContent>
                 </Tooltip>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem onClick={() => setEditingSymptom(symptom)}>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit Symptom
+                    </ContextMenuItem>
+                    <ContextMenuItem 
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => deleteSymptom(symptom.id)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Symptom
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
               ))}
             </div>
           </TooltipProvider>
         </div>
 
         {/* Quick Add Section */}
-        <div className="mt-6 p-4 bg-primary-soft rounded-lg border border-primary-light">
-          <p className="text-sm text-primary-foreground mb-2">Quick symptom entry:</p>
+        <div className="mt-6 p-4 bg-muted rounded-lg border border-border">
+          <p className="text-sm text-foreground mb-2">Quick symptom entry:</p>
           <div className="flex gap-2 flex-wrap">
             {["Headache", "Nausea", "Fatigue", "Pain", "Fever"].map((symptom) => (
-              <Button key={symptom} variant="ghost" size="sm" className="text-xs bg-background hover:bg-hover">
+              <Button 
+                key={symptom} 
+                variant="ghost" 
+                size="sm" 
+                className="text-xs bg-background hover:bg-hover"
+                onClick={() => addSymptom(symptom, new Date())}
+              >
                 {symptom}
               </Button>
             ))}

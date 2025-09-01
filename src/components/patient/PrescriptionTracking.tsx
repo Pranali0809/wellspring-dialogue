@@ -2,7 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Pill, AlertCircle, RefreshCw, CheckCircle } from "lucide-react";
+import { useState } from "react";
 
 interface Prescription {
   id: string;
@@ -14,9 +17,18 @@ interface Prescription {
   adherence: number;
   pillsRemaining: number;
   totalPills: number;
+  dailyDoses: number;
+}
+
+interface DoseChecked {
+  [prescriptionId: string]: {
+    [dateKey: string]: boolean[];
+  };
 }
 
 export const PrescriptionTracking = () => {
+  const [doseChecked, setDoseChecked] = useState<DoseChecked>({});
+  
   const prescriptions: Prescription[] = [
     {
       id: "1",
@@ -27,7 +39,8 @@ export const PrescriptionTracking = () => {
       refillDate: new Date("2024-03-20"),
       adherence: 85,
       pillsRemaining: 15,
-      totalPills: 60
+      totalPills: 60,
+      dailyDoses: 2
     },
     {
       id: "2",
@@ -38,7 +51,8 @@ export const PrescriptionTracking = () => {
       refillDate: new Date("2024-03-25"),
       adherence: 92,
       pillsRemaining: 8,
-      totalPills: 30
+      totalPills: 30,
+      dailyDoses: 1
     },
     {
       id: "3",
@@ -49,9 +63,44 @@ export const PrescriptionTracking = () => {
       refillDate: new Date("2024-03-15"),
       adherence: 90,
       pillsRemaining: 0,
-      totalPills: 30
+      totalPills: 30,
+      dailyDoses: 1
     }
   ];
+
+  const getTodayKey = () => {
+    return new Date().toDateString();
+  };
+
+  const isDoseChecked = (prescriptionId: string, doseIndex: number) => {
+    const todayKey = getTodayKey();
+    return doseChecked[prescriptionId]?.[todayKey]?.[doseIndex] || false;
+  };
+
+  const toggleDose = (prescriptionId: string, doseIndex: number) => {
+    const todayKey = getTodayKey();
+    setDoseChecked(prev => ({
+      ...prev,
+      [prescriptionId]: {
+        ...prev[prescriptionId],
+        [todayKey]: {
+          ...prev[prescriptionId]?.[todayKey],
+          [doseIndex]: !isDoseChecked(prescriptionId, doseIndex)
+        }
+      }
+    }));
+  };
+
+  const calculateActualAdherence = (prescription: Prescription) => {
+    const todayKey = getTodayKey();
+    const todayDoses = doseChecked[prescription.id]?.[todayKey] || [];
+    const checkedToday = todayDoses.filter(Boolean).length;
+    return Math.round((checkedToday / prescription.dailyDoses) * 100);
+  };
+
+  const resetPrescriptions = () => {
+    setDoseChecked({});
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -95,6 +144,31 @@ export const PrescriptionTracking = () => {
                     Refill: {prescription.refillDate.toLocaleDateString()}
                   </span>
                 </div>
+                
+                {/* Daily Dose Checkboxes */}
+                <div className="mt-3 p-2 bg-card-soft rounded border">
+                  <p className="text-xs text-muted-foreground mb-2">Today's doses:</p>
+                  <div className="flex gap-2">
+                    {Array.from({ length: prescription.dailyDoses }, (_, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`${prescription.id}-dose-${index}`}
+                          checked={isDoseChecked(prescription.id, index)}
+                          onCheckedChange={() => toggleDose(prescription.id, index)}
+                        />
+                        <label 
+                          htmlFor={`${prescription.id}-dose-${index}`}
+                          className="text-xs cursor-pointer"
+                        >
+                          Dose {index + 1}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    Adherence: {calculateActualAdherence(prescription)}%
+                  </div>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 {prescription.pillsRemaining <= 5 && (
@@ -115,7 +189,7 @@ export const PrescriptionTracking = () => {
         {/* Adherence Metrics */}
         <div className="p-4 bg-primary-soft rounded-lg border border-primary-light">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="font-semibold text-primary-foreground">Weekly Adherence</h4>
+            <h4 className="font-semibold text-primary-foreground">Adherence</h4>
             <span className="text-lg font-bold text-primary">{Math.round(overallAdherence)}%</span>
           </div>
           <Progress value={overallAdherence} className="mb-2" />
@@ -127,14 +201,28 @@ export const PrescriptionTracking = () => {
 
         {/* Quick Actions */}
         <div className="flex gap-2">
-          <Button size="sm" className="btn-healthcare-primary flex-1">
-            <Pill className="h-4 w-4 mr-2" />
-            Mark Dose Taken
-          </Button>
-          <Button size="sm" variant="outline" className="flex-1">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Request Refill
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" className="btn-healthcare-primary flex-1">
+                <Pill className="h-4 w-4 mr-2" />
+                Dosage Completed
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Reset Prescriptions</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to reset your prescriptions? This will mark all doses as complete and reset adherence to 100%.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={resetPrescriptions}>
+                  Confirm Reset
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </CardContent>
     </Card>

@@ -1,18 +1,24 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Shield, Calendar, CheckCircle, AlertCircle, Clock } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Shield, Calendar, CheckCircle, AlertCircle, Clock, History } from "lucide-react";
+import { useState } from "react";
 
 interface Vaccine {
   id: string;
   name: string;
-  status: "completed" | "due" | "scheduled" | "overdue";
+  status: "completed" | "due" | "scheduled" | "overdue" | "missed";
   lastDate?: Date;
   nextDate?: Date;
   location?: string;
+  ageRequired?: string;
+  canRetake?: boolean;
 }
 
 export const VaccineTracking = () => {
+  const [showHistory, setShowHistory] = useState(false);
+
   const vaccines: Vaccine[] = [
     {
       id: "1",
@@ -46,6 +52,20 @@ export const VaccineTracking = () => {
       name: "Pneumonia",
       status: "overdue",
       nextDate: new Date("2024-02-01")
+    },
+    {
+      id: "6",
+      name: "MMR (Measles, Mumps, Rubella)",
+      status: "missed",
+      ageRequired: "12-15 months",
+      canRetake: false
+    },
+    {
+      id: "7",
+      name: "Rotavirus",
+      status: "missed", 
+      ageRequired: "2-8 months",
+      canRetake: false
     }
   ];
 
@@ -74,6 +94,12 @@ export const VaccineTracking = () => {
           icon: AlertCircle,
           color: "bg-destructive-soft text-destructive",
           bgColor: "bg-destructive-soft"
+        };
+      case "missed":
+        return {
+          icon: AlertCircle,
+          color: "bg-muted text-muted-foreground",
+          bgColor: "bg-muted"
         };
       default:
         return {
@@ -114,7 +140,7 @@ export const VaccineTracking = () => {
 
         {/* Vaccine Status Grid */}
         <div className="grid grid-cols-1 gap-3">
-          {vaccines.map((vaccine) => {
+          {vaccines.filter(v => v.status !== "missed").map((vaccine) => {
             const config = getStatusConfig(vaccine.status);
             const StatusIcon = config.icon;
             
@@ -156,6 +182,18 @@ export const VaccineTracking = () => {
           })}
         </div>
 
+        {/* Missed Vaccines Note */}
+        {vaccines.filter(v => v.status === "missed").length > 0 && (
+          <div className="p-3 bg-muted rounded-lg border border-border">
+            <p className="text-sm font-medium text-foreground mb-2">Missed Compulsory Vaccines</p>
+            {vaccines.filter(v => v.status === "missed").map((vaccine) => (
+              <p key={vaccine.id} className="text-xs text-muted-foreground">
+                • {vaccine.name} was due at {vaccine.ageRequired} and can no longer be administered.
+              </p>
+            ))}
+          </div>
+        )}
+
         {/* Calendar Heatmap Visualization */}
         <div className="p-4 bg-card-soft rounded-lg border border-border">
           <h4 className="font-semibold text-foreground mb-3">Vaccine Calendar</h4>
@@ -188,10 +226,39 @@ export const VaccineTracking = () => {
             <Shield className="h-4 w-4 mr-2" />
             Schedule Vaccine
           </Button>
-          <Button size="sm" variant="outline" className="flex-1">
-            <Calendar className="h-4 w-4 mr-2" />
-            View History
-          </Button>
+          <Dialog open={showHistory} onOpenChange={setShowHistory}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline" className="flex-1">
+                <History className="h-4 w-4 mr-2" />
+                View History
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Vaccination History</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {vaccines.filter(v => v.status === "completed").map((vaccine) => (
+                  <div key={vaccine.id} className="p-3 bg-success-light rounded-lg border border-success">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-semibold text-foreground">{vaccine.name}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Completed: {vaccine.lastDate?.toLocaleDateString()}
+                        </p>
+                        {vaccine.location && (
+                          <p className="text-sm text-muted-foreground">
+                            Location: {vaccine.location}
+                          </p>
+                        )}
+                      </div>
+                      <CheckCircle className="h-5 w-5 text-success" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </CardContent>
     </Card>

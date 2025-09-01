@@ -85,7 +85,7 @@ export const MedicalHistoryOverview = () => {
                     <div>
                       <h4 className="font-semibold text-sm text-foreground">{category.name}</h4>
                       <Badge variant="secondary" className="text-xs">
-                        {category.count} items
+                        {category.count} {category.count === 1 ? category.name.slice(0, -1).toLowerCase() : category.name.toLowerCase()}
                       </Badge>
                     </div>
                   </div>
@@ -110,9 +110,9 @@ export const MedicalHistoryOverview = () => {
         </div>
 
         {/* Quick Stats */}
-        <div className="p-3 bg-primary-soft rounded-lg border border-primary-light">
-          <h4 className="font-semibold text-primary-foreground text-sm mb-2">Recent Activity</h4>
-          <div className="text-xs text-primary-foreground space-y-1">
+        <div className="p-3 bg-muted rounded-lg border border-border">
+          <h4 className="font-semibold text-foreground text-sm mb-2">Recent Activity</h4>
+          <div className="text-xs text-foreground space-y-1">
             <p>• Blood pressure reading added (March 10)</p>
             <p>• Diabetes medication updated (March 8)</p>
             <p>• Lab results reviewed (March 5)</p>

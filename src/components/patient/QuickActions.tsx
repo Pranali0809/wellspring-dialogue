@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Upload, Calendar, Pill, Zap, ChevronRight, Sparkles } from "lucide-react";
+import { Plus, Upload, Calendar, Pill, Zap, ChevronRight, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 
 export const QuickActions = () => {
@@ -49,20 +49,20 @@ export const QuickActions = () => {
   ];
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-6 right-6 z-40 max-w-sm">
       {/* AI Suggestions */}
       {aiSuggestions.length > 0 && (
         <div className="mb-4 space-y-2 max-w-sm">
           {aiSuggestions.slice(0, isExpanded ? 3 : 1).map((suggestion, index) => (
             <div 
               key={index}
-              className="p-3 bg-primary-soft border border-primary-light rounded-lg shadow-healthcare-medium animate-healthcare-slide-up"
+              className="p-3 bg-muted border border-border rounded-lg shadow-healthcare-medium animate-healthcare-slide-up"
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <div className="flex items-start gap-2">
                 <Sparkles className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
-                  <p className="text-sm text-primary-foreground">{suggestion}</p>
+                  <p className="text-sm text-foreground">{suggestion}</p>
                   <Button size="sm" variant="ghost" className="h-6 px-2 mt-2 text-xs text-primary hover:text-primary-foreground hover:bg-primary">
                     Add now
                   </Button>
@@ -83,18 +83,30 @@ export const QuickActions = () => {
               <Zap className="h-5 w-5 text-primary" />
               Quick Actions
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="healthcare-hover-glow"
-            >
-              {isExpanded ? (
-                <ChevronRight className="h-5 w-5 rotate-180" />
-              ) : (
-                <Zap className="h-5 w-5" />
+            <div className="flex items-center gap-1">
+              {isExpanded && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => setIsExpanded(false)}
+                  className="h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               )}
-            </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="healthcare-hover-glow"
+              >
+                {isExpanded ? (
+                  <ChevronRight className="h-5 w-5 rotate-180" />
+                ) : (
+                  <Zap className="h-5 w-5" />
+                )}
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
 
