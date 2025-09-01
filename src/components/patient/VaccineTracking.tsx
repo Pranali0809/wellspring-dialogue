@@ -140,7 +140,7 @@ export const VaccineTracking = () => {
 
         {/* Vaccine Status Grid */}
         <div className="grid grid-cols-1 gap-3">
-          {vaccines.filter(v => v.status !== "missed").map((vaccine) => {
+          {vaccines.filter(v => v.status !== "missed" && (showHistory || v.status !== "completed")).map((vaccine) => {
             const config = getStatusConfig(vaccine.status);
             const StatusIcon = config.icon;
             
@@ -224,41 +224,17 @@ export const VaccineTracking = () => {
         <div className="flex gap-2">
           <Button size="sm" className="btn-healthcare-success flex-1">
             <Shield className="h-4 w-4 mr-2" />
-            Schedule Vaccine
+            Vaccine
           </Button>
-          <Dialog open={showHistory} onOpenChange={setShowHistory}>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="outline" className="flex-1">
-                <History className="h-4 w-4 mr-2" />
-                View History
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Vaccination History</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {vaccines.filter(v => v.status === "completed").map((vaccine) => (
-                  <div key={vaccine.id} className="p-3 bg-success-light rounded-lg border border-success">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-semibold text-foreground">{vaccine.name}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Completed: {vaccine.lastDate?.toLocaleDateString()}
-                        </p>
-                        {vaccine.location && (
-                          <p className="text-sm text-muted-foreground">
-                            Location: {vaccine.location}
-                          </p>
-                        )}
-                      </div>
-                      <CheckCircle className="h-5 w-5 text-success" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className={`flex-1 ${showHistory ? 'bg-success text-success-foreground hover:bg-success/90' : ''}`}
+            onClick={() => setShowHistory(!showHistory)}
+          >
+            <History className="h-4 w-4 mr-2" />
+            View History
+          </Button>
         </div>
       </CardContent>
     </Card>

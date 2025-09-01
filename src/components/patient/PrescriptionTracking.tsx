@@ -144,31 +144,6 @@ export const PrescriptionTracking = () => {
                     Refill: {prescription.refillDate.toLocaleDateString()}
                   </span>
                 </div>
-                
-                {/* Daily Dose Checkboxes */}
-                <div className="mt-3 p-2 bg-card-soft rounded border">
-                  <p className="text-xs text-muted-foreground mb-2">Today's doses:</p>
-                  <div className="flex gap-2">
-                    {Array.from({ length: prescription.dailyDoses }, (_, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <Checkbox
-                          id={`${prescription.id}-dose-${index}`}
-                          checked={isDoseChecked(prescription.id, index)}
-                          onCheckedChange={() => toggleDose(prescription.id, index)}
-                        />
-                        <label 
-                          htmlFor={`${prescription.id}-dose-${index}`}
-                          className="text-xs cursor-pointer"
-                        >
-                          Dose {index + 1}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    Adherence: {calculateActualAdherence(prescription)}%
-                  </div>
-                </div>
               </div>
               <div className="flex items-center gap-2">
                 {prescription.pillsRemaining <= 5 && (
@@ -189,11 +164,11 @@ export const PrescriptionTracking = () => {
         {/* Adherence Metrics */}
         <div className="p-4 bg-primary-soft rounded-lg border border-primary-light">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="font-semibold text-primary-foreground">Adherence</h4>
-            <span className="text-lg font-bold text-primary">{Math.round(overallAdherence)}%</span>
+            <h4 className="font-semibold text-foreground">Adherence</h4>
+            <span className="text-lg font-bold text-foreground">{Math.round(overallAdherence)}%</span>
           </div>
           <Progress value={overallAdherence} className="mb-2" />
-          <div className="flex items-center gap-2 text-sm text-primary-foreground">
+          <div className="flex items-center gap-2 text-sm text-foreground">
             <CheckCircle className="h-4 w-4" />
             <span>Great job! You're taking your medications consistently.</span>
           </div>

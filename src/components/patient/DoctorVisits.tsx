@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CalendarDays, Stethoscope, FileText, Paperclip, Search } from "lucide-react";
+import { CalendarDays, Stethoscope, FileText, Paperclip, Search, X } from "lucide-react";
 import { useState } from "react";
 
 interface Visit {
@@ -109,7 +109,19 @@ export const DoctorVisits = () => {
         {/* Book Appointment Section */}
         {showBooking && (
           <div className="mb-6 p-4 bg-card-soft rounded-lg border border-border space-y-4">
-            <h4 className="font-semibold text-foreground">Book New Appointment</h4>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+                Book New Appointment
+              </h4>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowBooking(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
             
             {/* Doctor Search */}
             <div className="space-y-2">

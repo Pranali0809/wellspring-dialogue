@@ -49,7 +49,7 @@ export const QuickActions = () => {
   ];
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 max-w-sm">
+    <div className="fixed bottom-6 right-6 z-40 max-w-sm max-h-[calc(100vh-3rem)] overflow-y-auto">
       {/* AI Suggestions */}
       {aiSuggestions.length > 0 && (
         <div className="mb-4 space-y-2 max-w-sm">
@@ -75,7 +75,7 @@ export const QuickActions = () => {
 
       {/* Quick Actions Panel */}
       <Card className={`transition-all duration-300 shadow-healthcare-large ${
-        isExpanded ? 'w-96' : 'w-16'
+        isExpanded ? 'w-80 max-w-[calc(100vw-3rem)]' : 'w-16'
       }`}>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center justify-between">

@@ -207,7 +207,7 @@ export const SymptomsTimeline = () => {
                           </div>
                         </div>
                       </TooltipTrigger>
-                  <TooltipContent className="max-w-64">
+                  <TooltipContent className="max-w-64 bg-white border border-border shadow-lg">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <h4 className="font-semibold">{symptom.name}</h4>
