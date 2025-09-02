@@ -86,7 +86,7 @@ export const PatientDetailSlideOver = ({ patient, onClose }: PatientDetailSlideO
 
   return (
     <Sheet open={!!patient} onOpenChange={onClose}>
-      <SheetContent side="right" className="w-[600px] sm:w-[800px] overflow-y-auto healthcare-scrollbar">
+      <SheetContent side="right" className="w-[700px] sm:w-[900px] overflow-y-auto healthcare-scrollbar">
         <SheetHeader>
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
@@ -203,15 +203,64 @@ export const PatientDetailSlideOver = ({ patient, onClose }: PatientDetailSlideO
                 <CardTitle className="text-lg">Medical Timeline</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {/* Timeline visualization would go here */}
-                  <div className="p-4 bg-primary-soft rounded-lg">
-                    <h4 className="font-semibold text-primary-foreground mb-2">Recent Symptoms</h4>
-                    <div className="text-sm text-primary-foreground space-y-1">
-                      <p>• Fatigue (March 8) - Low severity</p>
-                      <p>• Headache (March 5) - Medium severity</p>
-                      <p>• Blood sugar spike (March 3) - High severity</p>
+                <div className="space-y-6">
+                  {/* Vertical Timeline */}
+                  <div className="relative">
+                    <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border"></div>
+                    
+                    {/* Timeline Items */}
+                    <div className="space-y-6">
+                      <div className="flex items-start gap-4">
+                        <div className="w-8 h-8 rounded-full bg-destructive flex items-center justify-center flex-shrink-0">
+                          <div className="w-3 h-3 rounded-full bg-destructive-foreground"></div>
+                        </div>
+                        <div className="flex-1 pt-1">
+                          <p className="font-semibold text-destructive">Blood sugar spike</p>
+                          <p className="text-sm text-muted-foreground">March 3, 2024 - High severity</p>
+                          <p className="text-sm mt-1">Patient reported glucose reading of 240 mg/dL after meal.</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-4">
+                        <div className="w-8 h-8 rounded-full bg-warning flex items-center justify-center flex-shrink-0">
+                          <div className="w-3 h-3 rounded-full bg-warning-foreground"></div>
+                        </div>
+                        <div className="flex-1 pt-1">
+                          <p className="font-semibold text-warning">Headache</p>
+                          <p className="text-sm text-muted-foreground">March 5, 2024 - Medium severity</p>
+                          <p className="text-sm mt-1">Tension headache lasting 2 hours, possibly stress-related.</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-4">
+                        <div className="w-8 h-8 rounded-full bg-success flex items-center justify-center flex-shrink-0">
+                          <div className="w-3 h-3 rounded-full bg-success-foreground"></div>
+                        </div>
+                        <div className="flex-1 pt-1">
+                          <p className="font-semibold text-success">Fatigue</p>
+                          <p className="text-sm text-muted-foreground">March 8, 2024 - Low severity</p>
+                          <p className="text-sm mt-1">General tiredness throughout the day, improved with rest.</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-4">
+                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                          <div className="w-3 h-3 rounded-full bg-primary-foreground"></div>
+                        </div>
+                        <div className="flex-1 pt-1">
+                          <p className="font-semibold text-primary">Medication Review</p>
+                          <p className="text-sm text-muted-foreground">March 10, 2024</p>
+                          <p className="text-sm mt-1">Regular medication adherence check and dosage adjustment.</p>
+                        </div>
+                      </div>
                     </div>
+                  </div>
+                  
+                  {/* View More Button */}
+                  <div className="text-center">
+                    <Button variant="outline" size="sm" className="btn-healthcare-secondary">
+                      View More History
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -220,47 +269,55 @@ export const PatientDetailSlideOver = ({ patient, onClose }: PatientDetailSlideO
 
           {/* Prescriptions Tab */}
           <TabsContent value="prescriptions" className="space-y-4">
-            <Card className="card-healthcare">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center justify-between">
-                  Active Prescriptions
-                  <Button size="sm" className="btn-healthcare-primary">
-                    Add Prescription
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Button variant="outline" size="sm" className="bg-primary text-primary-foreground">
+                    Active Prescriptions
                   </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {mockPrescriptions.map((prescription) => (
-                  <div key={prescription.id} className="p-4 border border-border rounded-lg space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-semibold">{prescription.drug}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {prescription.dose} • {prescription.frequency}
-                        </p>
+                  <Button variant="outline" size="sm">
+                    Regular Medication
+                  </Button>
+                </div>
+                <Button size="sm" className="btn-healthcare-primary">
+                  Add Prescription
+                </Button>
+              </div>
+              
+              <Card className="card-healthcare">
+                <CardContent className="space-y-4 pt-6">
+                  {mockPrescriptions.map((prescription) => (
+                    <div key={prescription.id} className="p-4 border border-border rounded-lg space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-semibold">{prescription.drug}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {prescription.dose} • {prescription.frequency}
+                          </p>
+                        </div>
+                        <Badge variant="secondary" className="bg-success-soft text-success">
+                          Active
+                        </Badge>
                       </div>
-                      <Badge variant="secondary" className="bg-success-soft text-success">
-                        Active
-                      </Badge>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <Label className="text-muted-foreground">Start Date</Label>
-                        <p>{prescription.startDate}</p>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <Label className="text-muted-foreground">Start Date</Label>
+                          <p>{prescription.startDate}</p>
+                        </div>
+                        <div>
+                          <Label className="text-muted-foreground">End Date</Label>
+                          <p>{prescription.endDate}</p>
+                        </div>
                       </div>
                       <div>
-                        <Label className="text-muted-foreground">End Date</Label>
-                        <p>{prescription.endDate}</p>
+                        <Label className="text-muted-foreground text-sm">Adherence: {prescription.adherence}%</Label>
+                        <Progress value={prescription.adherence} className="mt-1" />
                       </div>
                     </div>
-                    <div>
-                      <Label className="text-muted-foreground text-sm">Adherence: {prescription.adherence}%</Label>
-                      <Progress value={prescription.adherence} className="mt-1" />
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Notes Tab */}

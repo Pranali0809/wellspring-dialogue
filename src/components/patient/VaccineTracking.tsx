@@ -18,6 +18,7 @@ interface Vaccine {
 
 export const VaccineTracking = () => {
   const [showHistory, setShowHistory] = useState(false);
+  const [activeButton, setActiveButton] = useState<"vaccine" | "history">("vaccine");
 
   const vaccines: Vaccine[] = [
     {
@@ -140,7 +141,7 @@ export const VaccineTracking = () => {
 
         {/* Vaccine Status Grid */}
         <div className="grid grid-cols-1 gap-3">
-          {vaccines.filter(v => v.status !== "missed" && (showHistory || v.status !== "completed")).map((vaccine) => {
+          {vaccines.filter(v => v.status !== "missed" && (activeButton === "history" ? v.status === "completed" : v.status !== "completed")).map((vaccine) => {
             const config = getStatusConfig(vaccine.status);
             const StatusIcon = config.icon;
             
@@ -222,15 +223,18 @@ export const VaccineTracking = () => {
 
         {/* Quick Actions */}
         <div className="flex gap-2">
-          <Button size="sm" className="btn-healthcare-success flex-1">
+          <Button 
+            size="sm" 
+            className={`flex-1 ${activeButton === "vaccine" ? 'btn-healthcare-success' : 'btn-healthcare-secondary'}`}
+            onClick={() => setActiveButton("vaccine")}
+          >
             <Shield className="h-4 w-4 mr-2" />
             Vaccine
           </Button>
           <Button 
             size="sm" 
-            variant="outline" 
-            className={`flex-1 ${showHistory ? 'bg-success text-success-foreground hover:bg-success/90' : ''}`}
-            onClick={() => setShowHistory(!showHistory)}
+            className={`flex-1 ${activeButton === "history" ? 'bg-success text-success-foreground hover:bg-success/90' : 'btn-healthcare-secondary'}`}
+            onClick={() => setActiveButton("history")}
           >
             <History className="h-4 w-4 mr-2" />
             View History

@@ -231,10 +231,6 @@ export const SymptomsTimeline = () => {
                 </Tooltip>
                   </ContextMenuTrigger>
                   <ContextMenuContent>
-                    <ContextMenuItem onClick={() => setEditingSymptom(symptom)}>
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit Symptom
-                    </ContextMenuItem>
                     <ContextMenuItem 
                       className="text-destructive focus:text-destructive"
                       onClick={() => deleteSymptom(symptom.id)}

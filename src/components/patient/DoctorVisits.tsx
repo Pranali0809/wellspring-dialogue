@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CalendarDays, Stethoscope, FileText, Paperclip, Search, X } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { CalendarDays, Stethoscope, FileText, Paperclip, Search, X, Pill, StickyNote, TestTube, Upload } from "lucide-react";
 import { useState } from "react";
 
 interface Visit {
@@ -23,6 +25,7 @@ export const DoctorVisits = () => {
   const [doctorSearch, setDoctorSearch] = useState("");
   const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<Date>();
+  const [selectedVisit, setSelectedVisit] = useState<Visit | null>(null);
 
   const doctors = [
     { id: 1, name: "Dr. Sarah Mitchell", specialty: "Endocrinology", available: true },
@@ -226,7 +229,12 @@ export const DoctorVisits = () => {
 
               {/* Actions */}
               <div className="flex items-center justify-between pt-2 border-t border-border">
-                <Button variant="ghost" size="sm" className="text-xs">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-xs"
+                  onClick={() => setSelectedVisit(visit)}
+                >
                   <FileText className="h-3 w-3 mr-1" />
                   View Details
                 </Button>
@@ -262,6 +270,148 @@ export const DoctorVisits = () => {
             </div>
           </div>
         </div>
+
+        {/* Visit Details Dialog */}
+        <Dialog open={!!selectedVisit} onOpenChange={() => setSelectedVisit(null)}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={selectedVisit?.avatar} alt={selectedVisit?.doctorName} />
+                  <AvatarFallback className="bg-gradient-primary text-primary-foreground text-sm font-semibold">
+                    {selectedVisit?.doctorName.split(' ').map(n => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="text-lg font-semibold">{selectedVisit?.doctorName}</h3>
+                  <p className="text-sm text-muted-foreground">{selectedVisit?.specialty}</p>
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+            
+            {selectedVisit && (
+              <div className="space-y-6">
+                {/* Visit Info */}
+                <div className="grid grid-cols-2 gap-4 p-4 bg-card-soft rounded-lg">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Visit Date</p>
+                    <p className="text-foreground">{selectedVisit.date.toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Chief Complaint</p>
+                    <p className="text-foreground">{selectedVisit.chiefComplaint}</p>
+                  </div>
+                </div>
+
+                {/* Symptoms */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <StickyNote className="h-5 w-5 text-primary" />
+                    <h4 className="font-semibold">Symptoms Noted</h4>
+                  </div>
+                  <div className="p-4 bg-card-soft rounded-lg space-y-2">
+                    <p className="text-sm">• Chest discomfort - mild, intermittent</p>
+                    <p className="text-sm">• Shortness of breath during exercise</p>
+                    <p className="text-sm">• Occasional palpitations</p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Prescriptions */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Pill className="h-5 w-5 text-primary" />
+                    <h4 className="font-semibold">Prescriptions</h4>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-card-soft rounded-lg border border-border">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h5 className="font-medium">Lisinopril</h5>
+                          <p className="text-sm text-muted-foreground">10mg • Once daily</p>
+                        </div>
+                        <Badge variant="secondary" className="bg-success-soft text-success">Active</Badge>
+                      </div>
+                    </div>
+                    <div className="p-3 bg-card-soft rounded-lg border border-border">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h5 className="font-medium">Metoprolol</h5>
+                          <p className="text-sm text-muted-foreground">25mg • Twice daily</p>
+                        </div>
+                        <Badge variant="secondary" className="bg-success-soft text-success">Active</Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Doctor's Notes */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <FileText className="h-5 w-5 text-primary" />
+                    <h4 className="font-semibold">Doctor's Notes</h4>
+                  </div>
+                  <div className="p-4 bg-card-soft rounded-lg">
+                    <p className="text-sm leading-relaxed">{selectedVisit.keyNotes}</p>
+                    <p className="text-sm leading-relaxed mt-2">
+                      Patient responded well to previous treatment. Blood pressure readings have improved significantly. 
+                      Continue current medication regimen. Follow-up in 3 months or sooner if symptoms worsen.
+                    </p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Labs Assigned */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <TestTube className="h-5 w-5 text-primary" />
+                    <h4 className="font-semibold">Labs Assigned</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-3 bg-card-soft rounded-lg">
+                      <span className="text-sm">Complete Blood Count (CBC)</span>
+                      <Badge variant="secondary" className="bg-warning-soft text-warning">Pending</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-card-soft rounded-lg">
+                      <span className="text-sm">Lipid Panel</span>
+                      <Badge variant="secondary" className="bg-warning-soft text-warning">Pending</Badge>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Uploaded Labs */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Upload className="h-5 w-5 text-primary" />
+                    <h4 className="font-semibold">Uploaded Labs</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-3 bg-card-soft rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">EKG Results - March 1, 2024</span>
+                      </div>
+                      <Badge variant="secondary" className="bg-success-soft text-success">Normal</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-card-soft rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Chest X-Ray - February 28, 2024</span>
+                      </div>
+                      <Badge variant="secondary" className="bg-success-soft text-success">Normal</Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );

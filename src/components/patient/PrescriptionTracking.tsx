@@ -187,7 +187,7 @@ export const PrescriptionTracking = () => {
               <AlertDialogHeader>
                 <AlertDialogTitle>Reset Prescriptions</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to reset your prescriptions? This will mark all doses as complete and reset adherence to 100%.
+                  Are you sure you want to reset your prescriptions? This will reset adherence to 0%.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
