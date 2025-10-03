@@ -14,16 +14,210 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      doctor_patient_mapping: {
+        Row: {
+          created_at: string | null
+          doctor_id: string
+          id: string
+          patient_id: string
+          relationship_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          doctor_id: string
+          id?: string
+          patient_id: string
+          relationship_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          doctor_id?: string
+          id?: string
+          patient_id?: string
+          relationship_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_patient_mapping_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctor_patient_mapping_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doctors: {
+        Row: {
+          certification_board: string | null
+          created_at: string | null
+          id: string
+          license_id: string | null
+          name: string
+          status: string | null
+          today_schedule: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          certification_board?: string | null
+          created_at?: string | null
+          id?: string
+          license_id?: string | null
+          name: string
+          status?: string | null
+          today_schedule?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          certification_board?: string | null
+          created_at?: string | null
+          id?: string
+          license_id?: string | null
+          name?: string
+          status?: string | null
+          today_schedule?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      patients: {
+        Row: {
+          active_reports: number | null
+          age: number
+          allergies: Json | null
+          avatar: string | null
+          blood_group: string | null
+          chronic_conditions: Json | null
+          created_at: string | null
+          doctor_visits: Json | null
+          email: string | null
+          gender: string
+          id: string
+          medical_history: Json | null
+          name: string
+          phone: string | null
+          prescriptions: Json | null
+          symptoms_timeline: Json | null
+          total_visits: number | null
+          updated_at: string | null
+          user_id: string | null
+          vaccines: Json | null
+        }
+        Insert: {
+          active_reports?: number | null
+          age: number
+          allergies?: Json | null
+          avatar?: string | null
+          blood_group?: string | null
+          chronic_conditions?: Json | null
+          created_at?: string | null
+          doctor_visits?: Json | null
+          email?: string | null
+          gender: string
+          id?: string
+          medical_history?: Json | null
+          name: string
+          phone?: string | null
+          prescriptions?: Json | null
+          symptoms_timeline?: Json | null
+          total_visits?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          vaccines?: Json | null
+        }
+        Update: {
+          active_reports?: number | null
+          age?: number
+          allergies?: Json | null
+          avatar?: string | null
+          blood_group?: string | null
+          chronic_conditions?: Json | null
+          created_at?: string | null
+          doctor_visits?: Json | null
+          email?: string | null
+          gender?: string
+          id?: string
+          medical_history?: Json | null
+          name?: string
+          phone?: string | null
+          prescriptions?: Json | null
+          symptoms_timeline?: Json | null
+          total_visits?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          vaccines?: Json | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id: string
+          name: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "patient" | "doctor" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +344,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["patient", "doctor", "admin"],
+    },
   },
 } as const
