@@ -5,7 +5,8 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Pill, AlertCircle, RefreshCw, CheckCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Prescription {
   id: string;
@@ -28,45 +29,34 @@ interface DoseChecked {
 
 export const PrescriptionTracking = () => {
   const [doseChecked, setDoseChecked] = useState<DoseChecked>({});
-  
-  const prescriptions: Prescription[] = [
-    {
-      id: "1",
-      medication: "Metformin",
-      dosage: "500mg",
-      frequency: "Twice daily",
-      status: "active",
-      refillDate: new Date("2024-03-20"),
-      adherence: 85,
-      pillsRemaining: 15,
-      totalPills: 60,
-      dailyDoses: 2
-    },
-    {
-      id: "2",
-      medication: "Lisinopril",
-      dosage: "10mg", 
-      frequency: "Once daily",
-      status: "active",
-      refillDate: new Date("2024-03-25"),
-      adherence: 92,
-      pillsRemaining: 8,
-      totalPills: 30,
-      dailyDoses: 1
-    },
-    {
-      id: "3",
-      medication: "Atorvastatin",
-      dosage: "20mg",
-      frequency: "Once daily",
-      status: "upcoming",
-      refillDate: new Date("2024-03-15"),
-      adherence: 90,
-      pillsRemaining: 0,
-      totalPills: 30,
-      dailyDoses: 1
-    }
-  ];
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPrescriptions = async () => {
+      try {
+        const { data: patients } = await (supabase as any)
+          .from('patients')
+          .select('prescriptions')
+          .limit(1)
+          .single();
+
+        if (patients && patients.prescriptions) {
+          const rxData = patients.prescriptions as any[];
+          setPrescriptions(rxData.map(rx => ({
+            ...rx,
+            refillDate: new Date(rx.refillDate)
+          })));
+        }
+      } catch (error) {
+        console.error('Error fetching prescriptions:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPrescriptions();
+  }, []);
 
   const getTodayKey = () => {
     return new Date().toDateString();
