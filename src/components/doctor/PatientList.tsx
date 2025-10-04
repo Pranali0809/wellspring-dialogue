@@ -6,8 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Filter, Users, AlertTriangle, Calendar, Phone } from "lucide-react";
 import { useState } from "react";
 import { Patient } from "@/pages/DoctorDashboard";
-import { useDoctorData } from "@/hooks/useDoctorData";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface PatientListProps {
   onPatientSelect: (patient: Patient) => void;
@@ -17,21 +15,72 @@ interface PatientListProps {
 export const PatientList = ({ onPatientSelect, selectedPatient }: PatientListProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState<"all" | "new" | "followup" | "critical">("all");
-  const { patients: dbPatients, loading } = useDoctorData();
 
-  const patients: Patient[] = dbPatients.map(p => ({
-    id: p.id,
-    name: p.name,
-    age: p.age,
-    gender: p.gender,
-    bloodGroup: p.blood_group || "Unknown",
-    allergies: p.allergies,
-    chronicConditions: p.chronic_conditions,
-    lastVisit: new Date(p.last_visit),
-    nextAppointment: p.next_appointment ? new Date(p.next_appointment) : undefined,
-    criticalFlags: p.critical_flags,
-    avatar: p.avatar || "/placeholder.svg"
-  }));
+  const patients: Patient[] = [
+    {
+      id: "1",
+      name: "Sarah Johnson",
+      age: 32,
+      gender: "Female",
+      bloodGroup: "O+",
+      allergies: ["Peanuts", "Penicillin"],
+      chronicConditions: ["Diabetes Type 2"],
+      lastVisit: new Date("2024-03-01"),
+      nextAppointment: new Date("2024-03-15"),
+      criticalFlags: [],
+      avatar: "/placeholder.svg"
+    },
+    {
+      id: "2",
+      name: "Michael Chen",
+      age: 45,
+      gender: "Male", 
+      bloodGroup: "A+",
+      allergies: [],
+      chronicConditions: ["Hypertension", "High Cholesterol"],
+      lastVisit: new Date("2024-02-28"),
+      nextAppointment: new Date("2024-03-20"),
+      criticalFlags: ["High Blood Pressure"],
+      avatar: "/placeholder.svg"
+    },
+    {
+      id: "3",
+      name: "Emily Thompson",
+      age: 28,
+      gender: "Female",
+      bloodGroup: "B-",
+      allergies: ["Latex"],
+      chronicConditions: [],
+      lastVisit: new Date("2024-03-05"),
+      criticalFlags: [],
+      avatar: "/placeholder.svg"
+    },
+    {
+      id: "4",
+      name: "Robert Wilson",
+      age: 67,
+      gender: "Male",
+      bloodGroup: "AB+",
+      allergies: ["Shellfish"],
+      chronicConditions: ["Diabetes Type 2", "Heart Disease"],
+      lastVisit: new Date("2024-02-25"),
+      nextAppointment: new Date("2024-03-18"),
+      criticalFlags: ["Irregular Heart Rate", "Blood Sugar Spike"],
+      avatar: "/placeholder.svg"
+    },
+    {
+      id: "5",
+      name: "Lisa Anderson",
+      age: 39,
+      gender: "Female",
+      bloodGroup: "O-",
+      allergies: ["Aspirin"],
+      chronicConditions: ["Asthma"],
+      lastVisit: new Date("2024-03-02"),
+      criticalFlags: [],
+      avatar: "/placeholder.svg"
+    }
+  ];
 
   const filteredPatients = patients.filter(patient => {
     const matchesSearch = patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -53,26 +102,6 @@ export const PatientList = ({ onPatientSelect, selectedPatient }: PatientListPro
     if (patient.criticalFlags.length === 1) return "medium";
     return "low";
   };
-
-  if (loading) {
-    return (
-      <Card className="card-healthcare">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" />
-            Patient List
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-48 w-full" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card className="card-healthcare">
