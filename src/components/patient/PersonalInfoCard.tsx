@@ -26,26 +26,35 @@ export const PersonalInfoCard = () => {
   useEffect(() => {
     const fetchPatient = async () => {
       try {
-        // Get first patient for demo (in real app, would use authenticated user)
+        // First get patient ID (in real app, would use authenticated user)
         const { data: patients } = await (supabase as any)
           .from('patients')
-          .select('*')
+          .select('id')
           .limit(1)
           .single();
 
-        if (patients) {
-          setPatient({
-            id: patients.id,
-            name: patients.name,
-            age: patients.age,
-            gender: patients.gender,
-            phone: patients.phone,
-            email: patients.email,
-            bloodGroup: patients.blood_group,
-            avatar: patients.avatar,
-            allergies: patients.allergies,
-            chronicConditions: patients.chronic_conditions
+        if (patients?.id) {
+          // Call backend Edge Function
+          const { data, error } = await supabase.functions.invoke('get-patient', {
+            body: { patientId: patients.id }
           });
+
+          if (error) throw error;
+
+          if (data) {
+            setPatient({
+              id: data.id,
+              name: data.name,
+              age: data.age,
+              gender: data.gender,
+              phone: data.phone,
+              email: data.email,
+              bloodGroup: data.bloodGroup,
+              avatar: data.avatar,
+              allergies: data.allergies,
+              chronicConditions: data.chronicConditions
+            });
+          }
         }
       } catch (error) {
         console.error('Error fetching patient:', error);

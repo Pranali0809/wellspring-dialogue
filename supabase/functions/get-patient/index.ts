@@ -17,9 +17,8 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Extract patient ID from URL
-    const url = new URL(req.url);
-    const patientId = url.pathname.split('/').pop();
+    // Extract patient ID from request body
+    const { patientId } = await req.json();
 
     console.log('Fetching patient with ID:', patientId);
 

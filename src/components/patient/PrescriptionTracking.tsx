@@ -35,18 +35,28 @@ export const PrescriptionTracking = () => {
   useEffect(() => {
     const fetchPrescriptions = async () => {
       try {
+        // First get patient ID (in real app, would use authenticated user)
         const { data: patients } = await (supabase as any)
           .from('patients')
-          .select('prescriptions')
+          .select('id')
           .limit(1)
           .single();
 
-        if (patients && patients.prescriptions) {
-          const rxData = patients.prescriptions as any[];
-          setPrescriptions(rxData.map(rx => ({
-            ...rx,
-            refillDate: new Date(rx.refillDate)
-          })));
+        if (patients?.id) {
+          // Call backend Edge Function
+          const { data, error } = await supabase.functions.invoke('get-patient', {
+            body: { patientId: patients.id }
+          });
+
+          if (error) throw error;
+
+          if (data?.prescriptions) {
+            const rxData = data.prescriptions as any[];
+            setPrescriptions(rxData.map((rx: any) => ({
+              ...rx,
+              refillDate: new Date(rx.refillDate)
+            })));
+          }
         }
       } catch (error) {
         console.error('Error fetching prescriptions:', error);
