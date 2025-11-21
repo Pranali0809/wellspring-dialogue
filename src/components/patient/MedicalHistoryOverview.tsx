@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Heart, Scissors, AlertTriangle, Users } from "lucide-react";
+import { useState, useEffect } from "react";
+import { medicalHistoryApi } from "@/lib/api";
 
 interface HistoryCategory {
   id: string;
@@ -12,38 +14,57 @@ interface HistoryCategory {
 }
 
 export const MedicalHistoryOverview = () => {
+  const patientId = "patient_1";
+  const [history, setHistory] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await medicalHistoryApi.getHistory(patientId);
+        setHistory(data);
+      } catch (error) {
+        console.error("Failed to fetch medical history:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (!history) {
+    return <div>Loading...</div>;
+  }
+
   const categories: HistoryCategory[] = [
     {
       id: "conditions",
       name: "Conditions",
       icon: Heart,
-      count: 3,
+      count: history.conditions.length,
       color: "bg-primary",
-      items: ["Diabetes Type 2", "Hypertension", "High Cholesterol"]
+      items: history.conditions.map((c: any) => c.name)
     },
     {
       id: "surgeries", 
       name: "Surgeries",
       icon: Scissors,
-      count: 1,
+      count: history.surgeries.length,
       color: "bg-success",
-      items: ["Appendectomy (2018)"]
+      items: history.surgeries.map((s: any) => `${s.name} (${new Date(s.date).getFullYear()})`)
     },
     {
       id: "allergies",
       name: "Allergies",
       icon: AlertTriangle,
-      count: 2,
+      count: history.allergies.length,
       color: "bg-warning",
-      items: ["Peanuts", "Penicillin"]
+      items: history.allergies.map((a: any) => a.name)
     },
     {
       id: "family",
       name: "Family History",
       icon: Users,
-      count: 4,
+      count: history.familyHistory.length,
       color: "bg-muted",
-      items: ["Heart Disease (Father)", "Diabetes (Mother)", "Cancer (Grandmother)", "Stroke (Grandfather)"]
+      items: history.familyHistory.map((f: any) => `${f.condition} (${f.relative})`)
     }
   ];
 
@@ -72,6 +93,9 @@ export const MedicalHistoryOverview = () => {
           <div className="grid grid-cols-2 gap-3">
             {categories.map((category) => {
               const IconComponent = category.icon;
+              const singularName = category.name.endsWith('ies') 
+                ? category.name.slice(0, -3) + 'y'
+                : category.name.slice(0, -1);
               
               return (
                 <div 
@@ -85,7 +109,7 @@ export const MedicalHistoryOverview = () => {
                     <div>
                       <h4 className="font-semibold text-sm text-foreground">{category.name}</h4>
                       <Badge variant="secondary" className="text-xs">
-                        {category.count} {category.count === 1 ? category.name.slice(0, -1).toLowerCase() : category.name.toLowerCase()}
+                        {category.count} {category.count === 1 ? singularName.toLowerCase() : category.name.toLowerCase()}
                       </Badge>
                     </div>
                   </div>
@@ -110,12 +134,12 @@ export const MedicalHistoryOverview = () => {
         </div>
 
         {/* Quick Stats */}
-        <div className="p-3 bg-muted rounded-lg border border-border">
-          <h4 className="font-semibold text-foreground text-sm mb-2">Recent Activity</h4>
-          <div className="text-xs text-foreground space-y-1">
-            <p>• Blood pressure reading added (March 10)</p>
-            <p>• Diabetes medication updated (March 8)</p>
-            <p>• Lab results reviewed (March 5)</p>
+        <div className="p-3 bg-primary-soft rounded-lg border border-border">
+          <h4 className="font-semibold text-primary text-sm mb-2">Recent Activity</h4>
+          <div className="text-xs text-primary space-y-1">
+            {history.recentActivity.slice(0, 3).map((activity: any, idx: number) => (
+              <p key={idx}>• {activity.description} ({new Date(activity.date).toLocaleDateString()})</p>
+            ))}
           </div>
         </div>
       </CardContent>

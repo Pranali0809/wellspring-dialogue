@@ -8,8 +8,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Plus, AlertTriangle, CalendarIcon, Search, Edit, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
+import { symptomsApi } from "@/lib/api";
 
 interface Symptom {
   id: string;
@@ -21,53 +22,27 @@ interface Symptom {
 }
 
 export const SymptomsTimeline = () => {
-  const [symptoms, setSymptoms] = useState<Symptom[]>([
-    {
-      id: "1",
-      name: "Headache",
-      date: new Date("2024-03-01"),
-      severity: "medium",
-      duration: "2 hours",
-      notes: "Started after lunch, possibly stress-related"
-    },
-    {
-      id: "2", 
-      name: "Fatigue",
-      date: new Date("2024-03-03"),
-      severity: "low",
-      duration: "All day",
-      notes: "Feeling tired throughout the day"
-    },
-    {
-      id: "3",
-      name: "Nausea",
-      date: new Date("2024-03-05"),
-      severity: "high",
-      duration: "30 minutes",
-      notes: "After taking medication on empty stomach"
-    },
-    {
-      id: "4",
-      name: "Dizziness",
-      date: new Date("2024-03-08"),
-      severity: "medium",
-      duration: "10 minutes",
-      notes: "When standing up quickly"
-    },
-    {
-      id: "5",
-      name: "Chest Pain",
-      date: new Date("2024-03-10"),
-      severity: "high", 
-      duration: "5 minutes",
-      notes: "Sharp pain, resolved quickly"
-    }
-  ]);
-
+  const patientId = "patient_1";
+  const [symptoms, setSymptoms] = useState<Symptom[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [searchQuery, setSearchQuery] = useState("");
   const [editingSymptom, setEditingSymptom] = useState<Symptom | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await symptomsApi.getSymptoms(patientId);
+        setSymptoms(data.symptoms.map((s: any) => ({
+          ...s,
+          date: new Date(s.date)
+        })));
+      } catch (error) {
+        console.error("Failed to fetch symptoms:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   const commonSymptoms = [
     "Headache", "Nausea", "Fatigue", "Pain", "Fever", "Dizziness", "Cough", 
@@ -78,20 +53,34 @@ export const SymptomsTimeline = () => {
     symptom.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const addSymptom = (symptomName: string, date: Date = new Date()) => {
-    const newSymptom: Symptom = {
-      id: Date.now().toString(),
-      name: symptomName,
-      date,
-      severity: "medium",
-      duration: "Ongoing",
-      notes: ""
-    };
-    setSymptoms([...symptoms, newSymptom].sort((a, b) => a.date.getTime() - b.date.getTime()));
+  const addSymptom = async (symptomName: string, date: Date = new Date()) => {
+    try {
+      const newSymptom = {
+        name: symptomName,
+        date: date.toISOString(),
+        severity: "medium",
+        duration: "Ongoing",
+        notes: ""
+      };
+      
+      await symptomsApi.createSymptom(patientId, newSymptom);
+      const data = await symptomsApi.getSymptoms(patientId);
+      setSymptoms(data.symptoms.map((s: any) => ({
+        ...s,
+        date: new Date(s.date)
+      })));
+    } catch (error) {
+      console.error("Failed to add symptom:", error);
+    }
   };
 
-  const deleteSymptom = (id: string) => {
-    setSymptoms(symptoms.filter(s => s.id !== id));
+  const deleteSymptom = async (id: string) => {
+    try {
+      await symptomsApi.deleteSymptom(patientId, id);
+      setSymptoms(symptoms.filter(s => s.id !== id));
+    } catch (error) {
+      console.error("Failed to delete symptom:", error);
+    }
   };
 
   const getSeverityColor = (severity: string) => {
