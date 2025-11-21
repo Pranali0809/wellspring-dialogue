@@ -1,9 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Shield, Calendar, CheckCircle, AlertCircle, Clock, History } from "lucide-react";
-import { useState } from "react";
+import { Syringe, Calendar, CheckCircle, AlertCircle, Clock } from "lucide-react";
+import { useState, useEffect } from "react";
+import { vaccinesApi } from "@/lib/api";
 
 interface Vaccine {
   id: string;
@@ -17,10 +17,23 @@ interface Vaccine {
 }
 
 export const VaccineTracking = () => {
-  const [showHistory, setShowHistory] = useState(false);
+  const patientId = "patient_1";
+  const [vaccines, setVaccines] = useState<Vaccine[]>([]);
   const [activeButton, setActiveButton] = useState<"vaccine" | "history">("vaccine");
 
-  const vaccines: Vaccine[] = [
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await vaccinesApi.getVaccines(patientId);
+        setVaccines(data.vaccines);
+      } catch (error) {
+        console.error("Failed to fetch vaccines:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const oldVaccines: Vaccine[] = [
     {
       id: "1",
       name: "COVID-19 Booster",

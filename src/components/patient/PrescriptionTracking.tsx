@@ -2,10 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Pill, AlertCircle, RefreshCw, CheckCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { prescriptionsApi } from "@/lib/api";
 
 interface Prescription {
   id: string;
@@ -27,46 +27,23 @@ interface DoseChecked {
 }
 
 export const PrescriptionTracking = () => {
-  const [doseChecked, setDoseChecked] = useState<DoseChecked>({});
-  
-  const prescriptions: Prescription[] = [
-    {
-      id: "1",
-      medication: "Metformin",
-      dosage: "500mg",
-      frequency: "Twice daily",
-      status: "active",
-      refillDate: new Date("2024-03-20"),
-      adherence: 85,
-      pillsRemaining: 15,
-      totalPills: 60,
-      dailyDoses: 2
-    },
-    {
-      id: "2",
-      medication: "Lisinopril",
-      dosage: "10mg", 
-      frequency: "Once daily",
-      status: "active",
-      refillDate: new Date("2024-03-25"),
-      adherence: 92,
-      pillsRemaining: 8,
-      totalPills: 30,
-      dailyDoses: 1
-    },
-    {
-      id: "3",
-      medication: "Atorvastatin",
-      dosage: "20mg",
-      frequency: "Once daily",
-      status: "upcoming",
-      refillDate: new Date("2024-03-15"),
-      adherence: 90,
-      pillsRemaining: 0,
-      totalPills: 30,
-      dailyDoses: 1
-    }
-  ];
+  const patientId = "patient_1";
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await prescriptionsApi.getPrescriptions(patientId);
+        setPrescriptions(data.prescriptions.map((p: any) => ({
+          ...p,
+          refillDate: new Date(p.refillDate)
+        })));
+      } catch (error) {
+        console.error("Failed to fetch prescriptions:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   const getTodayKey = () => {
     return new Date().toDateString();
@@ -98,8 +75,17 @@ export const PrescriptionTracking = () => {
     return Math.round((checkedToday / prescription.dailyDoses) * 100);
   };
 
-  const resetPrescriptions = () => {
-    setDoseChecked({});
+  const resetPrescriptions = async () => {
+    try {
+      await prescriptionsApi.resetAdherence(patientId);
+      const data = await prescriptionsApi.getPrescriptions(patientId);
+      setPrescriptions(data.prescriptions.map((p: any) => ({
+        ...p,
+        refillDate: new Date(p.refillDate)
+      })));
+    } catch (error) {
+      console.error("Failed to reset prescriptions:", error);
+    }
   };
 
   const getStatusColor = (status: string) => {
