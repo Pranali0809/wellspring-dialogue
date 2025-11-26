@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Syringe, Calendar, CheckCircle, AlertCircle, Clock } from "lucide-react";
+import { Syringe, Calendar, CheckCircle, AlertCircle, Clock, Shield, History as HistoryIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { vaccinesApi } from "@/lib/api";
 
@@ -249,7 +249,7 @@ export const VaccineTracking = () => {
             className={`flex-1 ${activeButton === "history" ? 'bg-success text-success-foreground hover:bg-success/90' : 'btn-healthcare-secondary'}`}
             onClick={() => setActiveButton("history")}
           >
-            <History className="h-4 w-4 mr-2" />
+            <HistoryIcon className="h-4 w-4 mr-2" />
             View History
           </Button>
         </div>

@@ -7,7 +7,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { CalendarDays, Stethoscope, FileText, Paperclip, Search, X, Pill, StickyNote, TestTube, Upload } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { doctorVisitsApi } from "@/lib/api";
+import { toast } from "sonner";
 
 interface Visit {
   id: string;
@@ -21,64 +23,54 @@ interface Visit {
 }
 
 export const DoctorVisits = () => {
+  const patientId = "patient_1";
   const [showBooking, setShowBooking] = useState(false);
   const [doctorSearch, setDoctorSearch] = useState("");
   const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedVisit, setSelectedVisit] = useState<Visit | null>(null);
+  const [visits, setVisits] = useState<Visit[]>([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
 
-  const doctors = [
-    { id: 1, name: "Dr. Sarah Mitchell", specialty: "Endocrinology", available: true },
-    { id: 2, name: "Dr. James Rodriguez", specialty: "Cardiology", available: true },
-    { id: 3, name: "Dr. Emily Chen", specialty: "Internal Medicine", available: true },
-    { id: 4, name: "Dr. Michael Thompson", specialty: "Orthopedics", available: false },
-    { id: 5, name: "Dr. Lisa Anderson", specialty: "Dermatology", available: true },
-  ];
+  useEffect(() => {
+    fetchVisits();
+  }, []);
+
+  const fetchVisits = async () => {
+    try {
+      const data = await doctorVisitsApi.getVisits(patientId);
+      setVisits(data.visits.map((v: any) => ({
+        ...v,
+        date: new Date(v.date)
+      })));
+      setDoctors(data.doctors || []);
+    } catch (error) {
+      console.error("Failed to fetch visits:", error);
+      toast.error("Failed to load doctor visits");
+    }
+  };
 
   const filteredDoctors = doctors.filter(doctor =>
     doctor.name.toLowerCase().includes(doctorSearch.toLowerCase()) ||
     doctor.specialty.toLowerCase().includes(doctorSearch.toLowerCase())
   );
 
-  const visits: Visit[] = [
-    {
-      id: "1",
-      doctorName: "Dr. Sarah Mitchell",
-      specialty: "Endocrinology",
-      date: new Date("2024-03-01"),
-      chiefComplaint: "Diabetes follow-up",
-      keyNotes: "Blood sugar levels improved. Continue current medication.",
-      hasAttachments: true,
-      avatar: "/placeholder.svg"
-    },
-    {
-      id: "2", 
-      doctorName: "Dr. James Rodriguez",
-      specialty: "Cardiology",
-      date: new Date("2024-02-15"),
-      chiefComplaint: "Chest pain evaluation",
-      keyNotes: "EKG normal. Recommended stress test.",
-      hasAttachments: false
-    },
-    {
-      id: "3",
-      doctorName: "Dr. Emily Chen",
-      specialty: "Internal Medicine", 
-      date: new Date("2024-01-20"),
-      chiefComplaint: "Annual physical",
-      keyNotes: "Overall health good. Updated vaccinations.",
-      hasAttachments: true
-    },
-    {
-      id: "4",
-      doctorName: "Dr. Michael Thompson",
-      specialty: "Orthopedics",
-      date: new Date("2023-12-10"),
-      chiefComplaint: "Knee pain",
-      keyNotes: "Mild arthritis. Physical therapy recommended.",
-      hasAttachments: false
+  const handleBookAppointment = async () => {
+    if (!selectedDoctor || !selectedDate) return;
+    
+    try {
+      await doctorVisitsApi.bookAppointment(patientId, selectedDoctor.id, selectedDate.toISOString());
+      fetchVisits();
+      setShowBooking(false);
+      setSelectedDoctor(null);
+      setSelectedDate(undefined);
+      setDoctorSearch("");
+      toast.success(`Appointment booked with ${selectedDoctor.name}`);
+    } catch (error) {
+      console.error("Failed to book appointment:", error);
+      toast.error("Failed to book appointment");
     }
-  ];
+  };
 
   const getSpecialtyColor = (specialty: string) => {
     const colors = {
@@ -175,7 +167,10 @@ export const DoctorVisits = () => {
                   disabled={(date) => date < new Date()}
                 />
                 {selectedDate && (
-                  <Button className="w-full btn-healthcare-primary">
+                  <Button 
+                    className="w-full btn-healthcare-primary"
+                    onClick={handleBookAppointment}
+                  >
                     Book with {selectedDoctor.name} on {selectedDate.toLocaleDateString()}
                   </Button>
                 )}

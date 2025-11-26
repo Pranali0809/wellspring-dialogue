@@ -31,48 +31,19 @@ export const PrescriptionTracking = () => {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await prescriptionsApi.getPrescriptions(patientId);
-        setPrescriptions(data.prescriptions.map((p: any) => ({
-          ...p,
-          refillDate: new Date(p.refillDate)
-        })));
-      } catch (error) {
-        console.error("Failed to fetch prescriptions:", error);
-      }
-    };
-    fetchData();
+    fetchPrescriptions();
   }, []);
 
-  const getTodayKey = () => {
-    return new Date().toDateString();
-  };
-
-  const isDoseChecked = (prescriptionId: string, doseIndex: number) => {
-    const todayKey = getTodayKey();
-    return doseChecked[prescriptionId]?.[todayKey]?.[doseIndex] || false;
-  };
-
-  const toggleDose = (prescriptionId: string, doseIndex: number) => {
-    const todayKey = getTodayKey();
-    setDoseChecked(prev => ({
-      ...prev,
-      [prescriptionId]: {
-        ...prev[prescriptionId],
-        [todayKey]: {
-          ...prev[prescriptionId]?.[todayKey],
-          [doseIndex]: !isDoseChecked(prescriptionId, doseIndex)
-        }
-      }
-    }));
-  };
-
-  const calculateActualAdherence = (prescription: Prescription) => {
-    const todayKey = getTodayKey();
-    const todayDoses = doseChecked[prescription.id]?.[todayKey] || [];
-    const checkedToday = todayDoses.filter(Boolean).length;
-    return Math.round((checkedToday / prescription.dailyDoses) * 100);
+  const fetchPrescriptions = async () => {
+    try {
+      const data = await prescriptionsApi.getPrescriptions(patientId);
+      setPrescriptions(data.prescriptions.map((p: any) => ({
+        ...p,
+        refillDate: new Date(p.refillDate)
+      })));
+    } catch (error) {
+      console.error("Failed to fetch prescriptions:", error);
+    }
   };
 
   const resetPrescriptions = async () => {
