@@ -4,11 +4,14 @@ import { Bell, Calendar, MessageSquare, Settings, Users, Clock } from "lucide-re
 import { useEffect, useState } from "react";
 import { doctorApi } from "@/lib/api";
 
-export const DoctorHeader = () => {
+interface DoctorHeaderProps {
+  doctorId: string;
+}
+
+export const DoctorHeader = ({ doctorId }: DoctorHeaderProps) => {
   const [doctorInfo, setDoctorInfo] = useState<any>(null);
   const [appointments, setAppointments] = useState<any>(null);
   const [activePatients, setActivePatients] = useState<any>(null);
-  const doctorId = "doctor_1";
 
   useEffect(() => {
     const fetchData = async () => {
@@ -26,7 +29,7 @@ export const DoctorHeader = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [doctorId]);
 
   if (!doctorInfo || !appointments || !activePatients) {
     return null;

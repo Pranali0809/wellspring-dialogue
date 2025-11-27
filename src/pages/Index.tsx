@@ -96,7 +96,7 @@ const Index = () => {
                     <span className="text-sm text-foreground">Access AI health assistant</span>
                   </div>
                 </div>
-                <Link to="/patient" className="block">
+                <Link to="/patient/patient_1" className="block">
                   <Button className="w-full btn-healthcare-primary group">
                     Enter Patient Dashboard
                     <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -140,7 +140,7 @@ const Index = () => {
                     <span className="text-sm text-foreground">Clinical decision support</span>
                   </div>
                 </div>
-                <Link to="/doctor" className="block">
+                <Link to="/doctor/doctor_1" className="block">
                   <Button className="w-full btn-healthcare-success group">
                     Enter Doctor Dashboard
                     <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />

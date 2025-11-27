@@ -6,12 +6,23 @@ import { MedicalHistoryOverview } from "@/components/patient/MedicalHistoryOverv
 import { DoctorVisits } from "@/components/patient/DoctorVisits";
 import { QuickActions } from "@/components/patient/QuickActions";
 import { PatientHeader } from "@/components/patient/PatientHeader";
+import { useParams, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { ChatAssistant } from "@/components/chat/ChatAssistant";
 
 const PatientDashboard = () => {
+  const { patientId } = useParams();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!patientId) {
+      navigate('/patient/patient_1', { replace: true });
+    }
+  }, [patientId, navigate]);
+
   return (
     <div className="min-h-screen bg-background">
-      <PatientHeader />
+      <PatientHeader patientId={patientId || 'patient_1'} />
       
       <main className="healthcare-container py-6">
         {/* Dashboard Grid Layout */}

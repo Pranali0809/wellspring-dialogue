@@ -4,9 +4,12 @@ import { Bell, Calendar, MessageSquare, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import { patientHeaderApi } from "@/lib/api";
 
-export const PatientHeader = () => {
+interface PatientHeaderProps {
+  patientId: string;
+}
+
+export const PatientHeader = ({ patientId }: PatientHeaderProps) => {
   const [headerData, setHeaderData] = useState<any>(null);
-  const patientId = "patient_1";
 
   useEffect(() => {
     const fetchData = async () => {
@@ -18,7 +21,7 @@ export const PatientHeader = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [patientId]);
 
   if (!headerData) {
     return <div>Loading...</div>;
