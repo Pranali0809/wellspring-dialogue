@@ -1,3 +1,5 @@
 fastapi
 uvicorn
 pydantic==2.5.3
+firebase-admin
+requests

@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from patients import router as patients_router
 from doctor_visits import router as doctor_visits_router
 from medical_history import router as medical_history_router
 from patient_header import router as patient_header_router
@@ -25,6 +26,9 @@ app.add_middleware(
 )
 
 # Register all routers
+# Main Patient CRUD
+app.include_router(patients_router, prefix="/api", tags=["Patients"])
+
 # Patient APIs
 app.include_router(doctor_visits_router, prefix="/api", tags=["Doctor Visits"])
 app.include_router(medical_history_router, prefix="/api", tags=["Medical History"])

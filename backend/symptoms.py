@@ -1,10 +1,28 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
+import requests
 
 router = APIRouter()
 
-# In-memory storage
+# Helper to get patient from main endpoint
+def get_patient_data(patient_id: str):
+    try:
+        response = requests.get(f"http://localhost:8000/api/patient/{patient_id}")
+        if response.status_code == 200:
+            return response.json()
+        return None
+    except:
+        return None
+
+def update_patient_data(patient_id: str, patient_data: dict):
+    try:
+        response = requests.put(f"http://localhost:8000/api/patient/{patient_id}", json=patient_data)
+        return response.status_code == 200
+    except:
+        return False
+
+# Legacy in-memory storage for fallback
 symptoms_db = {
     "patient_1": [
         {
@@ -44,8 +62,27 @@ class Symptom(BaseModel):
 
 @router.get("/symptoms/{patient_id}")
 def get_symptoms(patient_id: str):
-    symptoms = symptoms_db.get(patient_id, [])
-    return {"symptoms": symptoms}
+    patient = get_patient_data(patient_id)
+    if not patient:
+        # Fallback to mock data
+        symptoms = symptoms_db.get(patient_id, [])
+        return {"symptoms": symptoms}
+    
+    # Return symptoms from unified schema
+    symptoms = patient.get("symptoms", [])
+    # Map to expected format
+    mapped_symptoms = [
+        {
+            "id": s.get("id", ""),
+            "name": s.get("name", ""),
+            "date": s.get("date", ""),
+            "severity": "moderate",  # default
+            "duration": "Unknown",  # default
+            "notes": s.get("description", "")
+        }
+        for s in symptoms
+    ]
+    return {"symptoms": mapped_symptoms}
 
 @router.post("/symptoms/{patient_id}")
 def create_symptom(patient_id: str, symptom: Symptom):

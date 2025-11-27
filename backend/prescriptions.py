@@ -1,10 +1,28 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional, Dict
+import requests
 
 router = APIRouter()
 
-# In-memory storage
+# Helper to get patient from main endpoint
+def get_patient_data(patient_id: str):
+    try:
+        response = requests.get(f"http://localhost:8000/api/patient/{patient_id}")
+        if response.status_code == 200:
+            return response.json()
+        return None
+    except:
+        return None
+
+def update_patient_data(patient_id: str, patient_data: dict):
+    try:
+        response = requests.put(f"http://localhost:8000/api/patient/{patient_id}", json=patient_data)
+        return response.status_code == 200
+    except:
+        return False
+
+# Legacy in-memory storage for fallback
 prescriptions_db = {
     "patient_1": [
         {
@@ -62,8 +80,31 @@ class Prescription(BaseModel):
 
 @router.get("/prescriptions/{patient_id}")
 def get_prescriptions(patient_id: str):
-    prescriptions = prescriptions_db.get(patient_id, [])
-    return {"prescriptions": prescriptions}
+    patient = get_patient_data(patient_id)
+    if not patient:
+        # Fallback to mock data
+        prescriptions = prescriptions_db.get(patient_id, [])
+        return {"prescriptions": prescriptions}
+    
+    # Return prescriptions from unified schema
+    prescriptions = patient.get("prescriptions", [])
+    # Map to expected format
+    mapped_prescriptions = [
+        {
+            "id": p.get("id", ""),
+            "medication": p.get("medication", ""),
+            "dosage": p.get("dosage", ""),
+            "frequency": str(p.get("frequency", 1)) + " times daily",
+            "status": p.get("status", "active"),
+            "refillDate": p.get("refill_date", ""),
+            "adherence": (p.get("adherence", {}).get("pills_remaining", 0) * 100 // p.get("adherence", {}).get("total_pills", 1)) if p.get("adherence") and p.get("adherence", {}).get("total_pills", 0) > 0 else 0,
+            "pillsRemaining": p.get("adherence", {}).get("pills_remaining", 0),
+            "totalPills": p.get("adherence", {}).get("total_pills", 0),
+            "dailyDoses": p.get("pills_daily_doses", 1)
+        }
+        for p in prescriptions
+    ]
+    return {"prescriptions": mapped_prescriptions}
 
 @router.post("/prescriptions/{patient_id}")
 def create_prescription(patient_id: str, prescription: Prescription):
