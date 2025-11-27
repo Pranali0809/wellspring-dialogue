@@ -11,13 +11,13 @@ import { doctorApi } from "@/lib/api";
 interface PatientListProps {
   onPatientSelect: (patient: Patient) => void;
   selectedPatient: Patient | null;
+  doctorId: string;
 }
 
-export const PatientList = ({ onPatientSelect, selectedPatient }: PatientListProps) => {
+export const PatientList = ({ onPatientSelect, selectedPatient, doctorId }: PatientListProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState<"all" | "new" | "followup" | "critical">("all");
   const [patients, setPatients] = useState<Patient[]>([]);
-  const doctorId = "doctor_1";
 
   useEffect(() => {
     const fetchPatients = async () => {
@@ -41,7 +41,7 @@ export const PatientList = ({ onPatientSelect, selectedPatient }: PatientListPro
       }
     };
     fetchPatients();
-  }, []);
+  }, [doctorId]);
 
   const filteredPatients = patients.filter(patient => {
     const matchesSearch = patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
