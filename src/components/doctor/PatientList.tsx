@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Filter, Users, AlertTriangle, Calendar, Phone } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Patient } from "@/pages/DoctorDashboard";
+import { doctorApi } from "@/lib/api";
 
 interface PatientListProps {
   onPatientSelect: (patient: Patient) => void;
@@ -15,72 +16,32 @@ interface PatientListProps {
 export const PatientList = ({ onPatientSelect, selectedPatient }: PatientListProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState<"all" | "new" | "followup" | "critical">("all");
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const doctorId = "doctor_1";
 
-  const patients: Patient[] = [
-    {
-      id: "1",
-      name: "Sarah Johnson",
-      age: 32,
-      gender: "Female",
-      bloodGroup: "O+",
-      allergies: ["Peanuts", "Penicillin"],
-      chronicConditions: ["Diabetes Type 2"],
-      lastVisit: new Date("2024-03-01"),
-      nextAppointment: new Date("2024-03-15"),
-      criticalFlags: [],
-      avatar: "/placeholder.svg"
-    },
-    {
-      id: "2",
-      name: "Michael Chen",
-      age: 45,
-      gender: "Male", 
-      bloodGroup: "A+",
-      allergies: [],
-      chronicConditions: ["Hypertension", "High Cholesterol"],
-      lastVisit: new Date("2024-02-28"),
-      nextAppointment: new Date("2024-03-20"),
-      criticalFlags: ["High Blood Pressure"],
-      avatar: "/placeholder.svg"
-    },
-    {
-      id: "3",
-      name: "Emily Thompson",
-      age: 28,
-      gender: "Female",
-      bloodGroup: "B-",
-      allergies: ["Latex"],
-      chronicConditions: [],
-      lastVisit: new Date("2024-03-05"),
-      criticalFlags: [],
-      avatar: "/placeholder.svg"
-    },
-    {
-      id: "4",
-      name: "Robert Wilson",
-      age: 67,
-      gender: "Male",
-      bloodGroup: "AB+",
-      allergies: ["Shellfish"],
-      chronicConditions: ["Diabetes Type 2", "Heart Disease"],
-      lastVisit: new Date("2024-02-25"),
-      nextAppointment: new Date("2024-03-18"),
-      criticalFlags: ["Irregular Heart Rate", "Blood Sugar Spike"],
-      avatar: "/placeholder.svg"
-    },
-    {
-      id: "5",
-      name: "Lisa Anderson",
-      age: 39,
-      gender: "Female",
-      bloodGroup: "O-",
-      allergies: ["Aspirin"],
-      chronicConditions: ["Asthma"],
-      lastVisit: new Date("2024-03-02"),
-      criticalFlags: [],
-      avatar: "/placeholder.svg"
-    }
-  ];
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const data = await doctorApi.getPatients(doctorId);
+        setPatients(data.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          age: p.age,
+          gender: p.gender,
+          bloodGroup: p.blood_group,
+          allergies: p.allergies,
+          chronicConditions: p.chronic_conditions.map((c: any) => typeof c === 'string' ? c : c.name),
+          lastVisit: new Date(p.last_visit),
+          nextAppointment: p.next_appointment ? new Date(p.next_appointment) : undefined,
+          criticalFlags: p.critical_flags,
+          avatar: p.avatar
+        })));
+      } catch (error) {
+        console.error("Failed to fetch patients:", error);
+      }
+    };
+    fetchPatients();
+  }, []);
 
   const filteredPatients = patients.filter(patient => {
     const matchesSearch = patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
