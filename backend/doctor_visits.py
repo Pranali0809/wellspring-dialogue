@@ -2,10 +2,28 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
+import requests
 
 router = APIRouter()
 
-# In-memory storage
+# Helper to get patient from main endpoint
+def get_patient_data(patient_id: str):
+    try:
+        response = requests.get(f"http://localhost:8000/api/patient/{patient_id}")
+        if response.status_code == 200:
+            return response.json()
+        return None
+    except:
+        return None
+
+def update_patient_data(patient_id: str, patient_data: dict):
+    try:
+        response = requests.put(f"http://localhost:8000/api/patient/{patient_id}", json=patient_data)
+        return response.status_code == 200
+    except:
+        return False
+
+# Legacy in-memory storage for fallback
 doctor_visits_db = {
     "patient_1": [
         {
@@ -81,8 +99,33 @@ class BookAppointment(BaseModel):
 
 @router.get("/doctor-visits/{patient_id}")
 def get_doctor_visits(patient_id: str):
-    visits = doctor_visits_db.get(patient_id, [])
-    return {"visits": visits, "doctors": doctors_db}
+    patient = get_patient_data(patient_id)
+    if not patient:
+        # Fallback to mock data
+        visits = doctor_visits_db.get(patient_id, [])
+        return {"visits": visits, "doctors": doctors_db}
+    
+    # Return doctor visits from unified schema
+    visits = patient.get("doctor_visits", [])
+    # Map to expected format
+    mapped_visits = [
+        {
+            "id": v.get("id", ""),
+            "doctorName": v.get("doctor_id", ""),
+            "specialty": "General Medicine",  # default
+            "date": v.get("visit_date", ""),
+            "chiefComplaint": v.get("chief_complaint", ""),
+            "notes": v.get("doctor_notes", ""),
+            "hasAttachments": False,
+            "symptoms": [s.get("name", "") for s in v.get("symptoms_noted", [])],
+            "prescriptions": [f"{p.get('medication', '')} {p.get('dosage', '')}" for p in v.get("prescriptions_given", [])],
+            "doctorNotes": v.get("doctor_notes", ""),
+            "labsAssigned": [],
+            "uploadedLabs": []
+        }
+        for v in visits
+    ]
+    return {"visits": mapped_visits, "doctors": doctors_db}
 
 @router.post("/doctor-visits/{patient_id}")
 def create_doctor_visit(patient_id: str, visit: Visit):

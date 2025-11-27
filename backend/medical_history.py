@@ -1,10 +1,28 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
+import requests
 
 router = APIRouter()
 
-# In-memory storage
+# Helper to get patient from main endpoint
+def get_patient_data(patient_id: str):
+    try:
+        response = requests.get(f"http://localhost:8000/api/patient/{patient_id}")
+        if response.status_code == 200:
+            return response.json()
+        return None
+    except:
+        return None
+
+def update_patient_data(patient_id: str, patient_data: dict):
+    try:
+        response = requests.put(f"http://localhost:8000/api/patient/{patient_id}", json=patient_data)
+        return response.status_code == 200
+    except:
+        return False
+
+# Legacy in-memory storage for fallback
 medical_history_db = {
     "patient_1": {
         "conditions": [
@@ -52,14 +70,44 @@ class MedicalHistory(BaseModel):
 
 @router.get("/medical-history/{patient_id}")
 def get_medical_history(patient_id: str):
-    history = medical_history_db.get(patient_id, {
-        "conditions": [],
-        "surgeries": [],
-        "allergies": [],
-        "familyHistory": [],
-        "recentActivity": []
-    })
-    return history
+    patient = get_patient_data(patient_id)
+    if not patient:
+        # Fallback to mock data
+        history = medical_history_db.get(patient_id, {
+            "conditions": [],
+            "surgeries": [],
+            "allergies": [],
+            "familyHistory": [],
+            "recentActivity": []
+        })
+        return history
+    
+    # Map unified schema to expected format
+    medical_info = patient.get("medical_info", {})
+    recent_activity = patient.get("recent_activity", [])
+    
+    return {
+        "conditions": [
+            {"id": f"cond_{i}", "name": c["condition"], "diagnosedDate": c.get("diagnosed_date", "")}
+            for i, c in enumerate(medical_info.get("conditions", []))
+        ],
+        "surgeries": [
+            {"id": f"surg_{i}", "name": s["name"], "date": s.get("date", ""), "hospital": s.get("hospital", "")}
+            for i, s in enumerate(medical_info.get("surgeries", []))
+        ],
+        "allergies": [
+            {"id": f"allg_{i}", "name": a["name"], "severity": a.get("severity", ""), "reaction": a.get("reaction", "")}
+            for i, a in enumerate(medical_info.get("allergies", []))
+        ],
+        "familyHistory": [
+            {"id": f"fam_{i}", "condition": f["condition"], "relative": f.get("relative", ""), "age": str(f.get("age", ""))}
+            for i, f in enumerate(medical_info.get("family_history", []))
+        ],
+        "recentActivity": [
+            {"id": f"act_{i}", "type": a.get("type", ""), "description": a.get("description", ""), "date": a.get("date", "")}
+            for i, a in enumerate(recent_activity)
+        ]
+    }
 
 @router.put("/medical-history/{patient_id}")
 def update_medical_history(patient_id: str, history: MedicalHistory):

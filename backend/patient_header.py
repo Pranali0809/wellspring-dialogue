@@ -1,22 +1,19 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
+import requests
 
 router = APIRouter()
 
-# In-memory storage
-patient_header_db = {
-    "patient_1": {
-        "id": "patient_1",
-        "name": "Sarah Johnson",
-        "patientId": "PT-2024-001",
-        "bloodGroup": "O+",
-        "allergies": ["Peanuts"],
-        "avatar": "/placeholder.svg",
-        "nextAppointment": "March 15, 2024",
-        "activePrescriptions": 3
-    }
-}
+# Helper to get patient from main endpoint
+def get_patient_data(patient_id: str):
+    try:
+        response = requests.get(f"http://localhost:8000/api/patient/{patient_id}")
+        if response.status_code == 200:
+            return response.json()
+        return None
+    except:
+        return None
 
 class PatientHeader(BaseModel):
     id: str
@@ -30,10 +27,27 @@ class PatientHeader(BaseModel):
 
 @router.get("/patient-header/{patient_id}")
 def get_patient_header(patient_id: str):
-    header = patient_header_db.get(patient_id)
-    if not header:
+    patient = get_patient_data(patient_id)
+    if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
-    return header
+    
+    # Map unified schema to expected format
+    personal_info = patient.get("personal_info", {})
+    medical_info = patient.get("medical_info", {})
+    prescriptions = patient.get("prescriptions", [])
+    
+    active_prescriptions = len([p for p in prescriptions if p.get("status") == "active"])
+    
+    return {
+        "id": patient_id,
+        "name": personal_info.get("name", ""),
+        "patientId": patient_id.upper(),
+        "bloodGroup": personal_info.get("blood_type", ""),
+        "allergies": [a["name"] for a in medical_info.get("allergies", [])],
+        "avatar": "/placeholder.svg",
+        "nextAppointment": personal_info.get("next_appointment_id", ""),
+        "activePrescriptions": active_prescriptions
+    }
 
 @router.put("/patient-header/{patient_id}")
 def update_patient_header(patient_id: str, header: PatientHeader):

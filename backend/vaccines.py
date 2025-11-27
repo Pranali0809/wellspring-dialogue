@@ -1,10 +1,28 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
+import requests
 
 router = APIRouter()
 
-# In-memory storage
+# Helper to get patient from main endpoint
+def get_patient_data(patient_id: str):
+    try:
+        response = requests.get(f"http://localhost:8000/api/patient/{patient_id}")
+        if response.status_code == 200:
+            return response.json()
+        return None
+    except:
+        return None
+
+def update_patient_data(patient_id: str, patient_data: dict):
+    try:
+        response = requests.put(f"http://localhost:8000/api/patient/{patient_id}", json=patient_data)
+        return response.status_code == 200
+    except:
+        return False
+
+# Legacy in-memory storage for fallback
 vaccines_db = {
     "patient_1": [
         {
@@ -66,8 +84,28 @@ class Vaccine(BaseModel):
 
 @router.get("/vaccines/{patient_id}")
 def get_vaccines(patient_id: str):
-    vaccines = vaccines_db.get(patient_id, [])
-    return {"vaccines": vaccines}
+    patient = get_patient_data(patient_id)
+    if not patient:
+        # Fallback to mock data
+        vaccines = vaccines_db.get(patient_id, [])
+        return {"vaccines": vaccines}
+    
+    # Return vaccines from unified schema
+    vaccines = patient.get("vaccines", [])
+    # Map to expected format
+    mapped_vaccines = [
+        {
+            "id": v.get("id", ""),
+            "name": v.get("name", ""),
+            "status": v.get("status", "scheduled"),
+            "dueDate": v.get("scheduled_for", ""),
+            "lastTaken": v.get("completed_on", ""),
+            "location": "Health Center",  # default
+            "canRetake": v.get("status") != "completed"
+        }
+        for v in vaccines
+    ]
+    return {"vaccines": mapped_vaccines}
 
 @router.post("/vaccines/{patient_id}")
 def create_vaccine(patient_id: str, vaccine: Vaccine):
