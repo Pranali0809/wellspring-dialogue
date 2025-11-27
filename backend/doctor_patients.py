@@ -1,24 +1,59 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
-import requests
+from firestore_client import db
 
 router = APIRouter()
 
-# Helper to get patient from main endpoint
-def get_patient_data(patient_id: str):
+# Helper to get all patients for a doctor from Firestore
+def get_doctor_patients_from_firestore(doctor_id: str):
+    """Get all patients who have appointments or visits with this doctor"""
+    if db is None:
+        return []
+    
     try:
-        response = requests.get(f"http://localhost:8000/api/patient/{patient_id}")
-        if response.status_code == 200:
-            return response.json()
-        return None
-    except:
-        return None
+        patient_ids = set()
+        
+        # Get patient IDs from appointments
+        appointments_ref = db.collection("appointments").where("doctor_id", "==", doctor_id)
+        for appt in appointments_ref.stream():
+            appt_data = appt.to_dict()
+            if "patient_id" in appt_data:
+                patient_ids.add(appt_data["patient_id"])
+        
+        # Get all patients and check for doctor_visits
+        patients_ref = db.collection("patients")
+        for patient_doc in patients_ref.stream():
+            patient_data = patient_doc.to_dict()
+            doctor_visits = patient_data.get("doctor_visits", [])
+            for visit in doctor_visits:
+                if visit.get("doctor_id") == doctor_id:
+                    patient_ids.add(patient_doc.id)
+                    break
+        
+        return list(patient_ids)
+    except Exception as e:
+        print(f"Error getting doctor patients: {str(e)}")
+        return []
 
-# Doctor-patient mapping
-doctor_patient_mapping = {
-    "doctor_1": ["patient_1"]
-}
+# Helper to get patient from Firestore
+def get_patient_data(patient_id: str):
+    if db is None:
+        return None
+    
+    try:
+        doc_ref = db.collection("patients").document(patient_id)
+        doc = doc_ref.get()
+        
+        if not doc.exists:
+            return None
+        
+        patient_data = doc.to_dict()
+        patient_data["patient_id"] = doc.id
+        return patient_data
+    except Exception as e:
+        print(f"Error getting patient data: {str(e)}")
+        return None
 
 class PatientListItem(BaseModel):
     id: str
@@ -47,7 +82,9 @@ class PatientDetail(BaseModel):
 
 @router.get("/doctor/{doctor_id}/patients")
 def get_doctor_patients(doctor_id: str):
-    patient_ids = doctor_patient_mapping.get(doctor_id, [])
+    """Get all patients for a doctor from appointments and visits"""
+    patient_ids = get_doctor_patients_from_firestore(doctor_id)
+    
     if not patient_ids:
         return []
     
@@ -83,8 +120,9 @@ def get_doctor_patients(doctor_id: str):
 
 @router.get("/doctor/{doctor_id}/patients/{patient_id}")
 def get_patient_detail(doctor_id: str, patient_id: str):
+    """Get detailed patient view for doctor"""
     # Check if doctor has access to this patient
-    patient_ids = doctor_patient_mapping.get(doctor_id, [])
+    patient_ids = get_doctor_patients_from_firestore(doctor_id)
     if patient_id not in patient_ids:
         raise HTTPException(status_code=403, detail="Access denied")
     
@@ -139,17 +177,21 @@ def get_patient_detail(doctor_id: str, patient_id: str):
 
 @router.put("/doctor/{doctor_id}/patients/{patient_id}/status")
 def update_patient_status(doctor_id: str, patient_id: str, status: dict):
-    patient_ids = doctor_patient_mapping.get(doctor_id, [])
+    """Update patient status"""
+    patient_ids = get_doctor_patients_from_firestore(doctor_id)
     if patient_id not in patient_ids:
         raise HTTPException(status_code=403, detail="Access denied")
     
-    # Update patient status in unified schema
-    patient = get_patient_data(patient_id)
-    if patient:
-        patient["status"] = status
-        try:
-            requests.put(f"http://localhost:8000/api/patient/{patient_id}", json=patient)
-        except:
-            pass
+    # Update patient status in Firestore
+    if db is None:
+        return {"message": "Patient status updated (mock)", "status": status}
     
-    return {"message": "Patient status updated", "status": status}
+    try:
+        patient = get_patient_data(patient_id)
+        if patient:
+            patient["status"] = status
+            doc_ref = db.collection("patients").document(patient_id)
+            doc_ref.set(patient)
+        return {"message": "Patient status updated", "status": status}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating status: {str(e)}")

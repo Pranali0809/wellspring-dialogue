@@ -48,6 +48,36 @@ Each patient document in the `patients` collection follows this exact structure:
 }
 ```
 
+## Doctor Schema
+
+Each doctor document in the `doctors` collection:
+
+```json
+{
+  "doctor_id": "string",
+  "name": "string",
+  "certified_board": "string",
+  "license_id": "string",
+  "status": "active | inactive"
+}
+```
+
+## Appointments Schema
+
+Each appointment document in the `appointments` collection:
+
+```json
+{
+  "appointment_id": "string",
+  "patient_id": "string",
+  "doctor_id": "string",
+  "date": "string",
+  "time": "string",
+  "status": "completed | pending | cancelled",
+  "type": "string"
+}
+```
+
 ## Setup Instructions
 
 ### Option 1: With Firestore (Production)
@@ -87,6 +117,21 @@ The API will be available at `http://localhost:8000`
 - `GET /api/patient/{patient_id}` - Get single patient (unified schema)
 - `PUT /api/patient/{patient_id}` - Update patient (unified schema)
 
+### Doctor Data
+- `GET /api/doctor/{doctor_id}` - Get doctor info
+- `PUT /api/doctor/{doctor_id}` - Update doctor info
+- `GET /api/doctor/{doctor_id}/patients` - Get all patients for a doctor
+- `GET /api/doctor/{doctor_id}/patients/{patient_id}` - Get patient detail
+- `GET /api/doctor/{doctor_id}/appointments` - Get all appointments
+- `GET /api/doctor/{doctor_id}/appointments/today` - Get today's appointments
+- `GET /api/doctor/{doctor_id}/patients/active` - Get active/critical patients
+
+### Doctor Notes (uses patient.doctor_visits)
+- `GET /api/doctor/{doctor_id}/patients/{patient_id}/notes` - Get notes
+- `POST /api/doctor/{doctor_id}/patients/{patient_id}/notes` - Create note
+- `PUT /api/doctor/{doctor_id}/patients/{patient_id}/notes/{note_id}` - Update note
+- `DELETE /api/doctor/{doctor_id}/patients/{patient_id}/notes/{note_id}` - Delete note
+
 ### Legacy Compatibility Endpoints
 These endpoints fetch from the unified patient schema but return data in the format expected by the existing frontend:
 
@@ -106,6 +151,8 @@ All other CRUD operations (POST, PUT, DELETE) are also supported.
 2. **Backward Compatibility**: Legacy endpoints map the unified schema to their expected format
 3. **Automatic Fallback**: If Firestore is unavailable, mock data is used automatically
 4. **Single Source of Truth**: The `GET /api/patient/{patient_id}` endpoint is the primary data source
+5. **Doctor-Patient Linking**: Doctors access patients through appointments or doctor_visits in patient schema
+6. **No Data Duplication**: Doctor notes are stored in patient.doctor_visits array
 
 ## Adding Sample Data
 
@@ -118,11 +165,35 @@ from firestore_client import db
 # Add sample patient
 patient_data = mock_patients_db["patient_1"]
 db.collection("patients").document("patient_1").set(patient_data)
+
+# Add sample doctor
+doctor_data = {
+    "doctor_id": "doctor_1",
+    "name": "Dr. Michael Chen",
+    "certified_board": "American Board of Internal Medicine",
+    "license_id": "MD-45892",
+    "status": "active"
+}
+db.collection("doctors").document("doctor_1").set(doctor_data)
+
+# Add sample appointment
+appointment_data = {
+    "appointment_id": "apt_001",
+    "patient_id": "patient_1",
+    "doctor_id": "doctor_1",
+    "date": "2024-03-15",
+    "time": "09:00",
+    "status": "pending",
+    "type": "checkup"
+}
+db.collection("appointments").document("apt_001").set(appointment_data)
 ```
 
 ## Architecture Notes
 
 - All patient-related endpoints call the main patient endpoint internally
-- Doctor endpoints share patient data (no duplication)
+- Doctor endpoints query patients dynamically based on appointments and visits
 - The unified schema ensures data consistency across all features
+- Doctor notes are stored in patient.doctor_visits array (no separate collection)
 - Frontend UI remains unchanged while backend uses single source of truth
+- Three collections only: patients, doctors, appointments
