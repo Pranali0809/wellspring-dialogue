@@ -1,8 +1,37 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Bell, Calendar, MessageSquare, Settings, Users, Clock } from "lucide-react";
+import { useEffect, useState } from "react";
+import { doctorApi } from "@/lib/api";
 
 export const DoctorHeader = () => {
+  const [doctorInfo, setDoctorInfo] = useState<any>(null);
+  const [appointments, setAppointments] = useState<any>(null);
+  const [activePatients, setActivePatients] = useState<any>(null);
+  const doctorId = "doctor_1";
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [info, appts, patients] = await Promise.all([
+          doctorApi.getInfo(doctorId),
+          doctorApi.getTodayAppointments(doctorId),
+          doctorApi.getActivePatients(doctorId)
+        ]);
+        setDoctorInfo(info);
+        setAppointments(appts);
+        setActivePatients(patients);
+      } catch (error) {
+        console.error("Failed to fetch doctor data:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (!doctorInfo || !appointments || !activePatients) {
+    return null;
+  }
+
   return (
     <header className="bg-card border-b border-border shadow-healthcare-soft">
       <div className="healthcare-container py-4">
@@ -10,17 +39,17 @@ export const DoctorHeader = () => {
           {/* Doctor Profile */}
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16 ring-4 ring-success-soft">
-              <AvatarImage src="/placeholder.svg" alt="Dr. Emily Rodriguez" />
+              <AvatarImage src="/placeholder.svg" alt={doctorInfo.name} />
               <AvatarFallback className="bg-gradient-success text-success-foreground text-lg font-semibold">
-                ER
+                {doctorInfo.name.split(' ').map((n: string) => n[0]).join('')}
               </AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Dr. Emily Rodriguez</h1>
-              <p className="text-muted-foreground">Internal Medicine • Board Certified</p>
+              <h1 className="text-2xl font-bold text-foreground">{doctorInfo.name}</h1>
+              <p className="text-muted-foreground">{doctorInfo.certified_board}</p>
               <div className="flex items-center gap-4 mt-1">
-                <span className="status-indicator-success">Active</span>
-                <span className="status-indicator-info">License: MD-2024-001</span>
+                <span className="status-indicator-success">{doctorInfo.status}</span>
+                <span className="status-indicator-info">License: {doctorInfo.license_id}</span>
               </div>
             </div>
           </div>
@@ -35,15 +64,15 @@ export const DoctorHeader = () => {
               </div>
               <div className="flex items-center gap-4">
                 <div className="text-center">
-                  <p className="text-lg font-bold text-primary">12</p>
+                  <p className="text-lg font-bold text-primary">{appointments.total_appointments_today}</p>
                   <p className="text-xs text-muted-foreground">Appointments</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-lg font-bold text-success">8</p>
+                  <p className="text-lg font-bold text-success">{appointments.completed_appointments_today}</p>
                   <p className="text-xs text-muted-foreground">Completed</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-lg font-bold text-warning">4</p>
+                  <p className="text-lg font-bold text-warning">{appointments.remaining_appointments_today}</p>
                   <p className="text-xs text-muted-foreground">Remaining</p>
                 </div>
               </div>
@@ -57,11 +86,11 @@ export const DoctorHeader = () => {
               </div>
               <div className="flex items-center gap-4">
                 <div className="text-center">
-                  <p className="text-lg font-bold text-primary">247</p>
+                  <p className="text-lg font-bold text-primary">{activePatients.active_patients.length}</p>
                   <p className="text-xs text-muted-foreground">Active Patients</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-lg font-bold text-warning">3</p>
+                  <p className="text-lg font-bold text-warning">{activePatients.critical_patients.length}</p>
                   <p className="text-xs text-muted-foreground">Critical Flags</p>
                 </div>
               </div>
