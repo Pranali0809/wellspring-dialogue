@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Patient } from "@/pages/DoctorDashboard";
-import { AIDiagnosticSuggestions } from "@/components/doctor/AIDiagnosticSuggestions";
+import { AudioUploadDiagnosis } from "@/components/doctor/AudioUploadDiagnosis";
 import { 
   X, 
   User, 
@@ -363,8 +363,11 @@ export const PatientDetailSlideOver = ({ patient, onClose }: PatientDetailSlideO
 
           {/* Labs Tab */}
           <TabsContent value="labs" className="space-y-4">
-            {/* AI Diagnostic Suggestions */}
-            <AIDiagnosticSuggestions appointmentId={patient.id} />
+            {/* Audio Upload & Diagnosis */}
+            <AudioUploadDiagnosis 
+              appointmentId={patient.id} 
+              hasPreAssessment={true} 
+            />
 
             <Card className="card-healthcare">
               <CardHeader>
