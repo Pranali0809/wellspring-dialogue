@@ -169,3 +169,22 @@ export const doctorApi = {
   getActivePatients: (doctorId: string) =>
     apiCall<any>(`/doctor/${doctorId}/patients/active`),
 };
+
+// AI Assessment API
+export const aiAssessmentApi = {
+  startAgent: (appointmentId: string) =>
+    apiCall<{ agent_session_id: string; message: string }>(`/appointment/${appointmentId}/start-agent`, 'POST'),
+  
+  sendMessage: (appointmentId: string, agentSessionId: string, message: string) =>
+    apiCall<{ message: string; finished: boolean; structured_report?: any }>(
+      `/appointment/${appointmentId}/agent-message`, 
+      'POST', 
+      { agent_session_id: agentSessionId, message }
+    ),
+  
+  uploadAudio: (appointmentId: string) =>
+    apiCall<any>(`/appointment/${appointmentId}/upload-audio`, 'POST'),
+  
+  saveDoctorReview: (appointmentId: string, review: any) =>
+    apiCall(`/appointment/${appointmentId}/doctor-review`, 'POST', review),
+};

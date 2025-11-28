@@ -20,6 +20,7 @@ from doctor_info import router as doctor_info_router
 from doctor_patients import router as doctor_patients_router
 from doctor_notes import router as doctor_notes_router
 from doctor_appointments import router as doctor_appointments_router
+from agent_assessment import router as agent_assessment_router
 mock_appointments_db = [
     {
         "appointment_id": "apt_001",
@@ -104,6 +105,7 @@ app.include_router(doctor_info_router, prefix="/api", tags=["Doctor Info"])
 app.include_router(doctor_patients_router, prefix="/api", tags=["Doctor Patients"])
 app.include_router(doctor_notes_router, prefix="/api", tags=["Doctor Notes"])
 app.include_router(doctor_appointments_router, prefix="/api", tags=["Doctor Appointments"])
+app.include_router(agent_assessment_router, prefix="/api", tags=["Agent Assessment"])
 
 
 
