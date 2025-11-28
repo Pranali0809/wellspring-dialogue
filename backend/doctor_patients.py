@@ -15,11 +15,11 @@ def get_doctor_patients_from_firestore(doctor_id: str):
         patient_ids = set()
         
         # Get patient IDs from appointments
-        appointments_ref = db.collection("appointments").where("doctor_id", "==", doctor_id)
-        for appt in appointments_ref.stream():
-            appt_data = appt.to_dict()
-            if "patient_id" in appt_data:
-                patient_ids.add(appt_data["patient_id"])
+        # appointments_ref = db.collection("appointments").where("doctor_id", "==", doctor_id)
+        # for appt in appointments_ref.stream():
+        #     appt_data = appt.to_dict()
+        #     if "patient_id" in appt_data:
+        #         patient_ids.add(appt_data["patient_id"])
         
         # Get all patients and check for doctor_visits
         patients_ref = db.collection("patients")
@@ -175,23 +175,65 @@ def get_patient_detail(doctor_id: str, patient_id: str):
         ]
     }
 
-@router.put("/doctor/{doctor_id}/patients/{patient_id}/status")
-def update_patient_status(doctor_id: str, patient_id: str, status: dict):
-    """Update patient status"""
+# @router.put("/doctor/{doctor_id}/patients/{patient_id}/status")
+# def update_patient_status(doctor_id: str, patient_id: str, status: dict):
+#     """Update patient status"""
+#     patient_ids = get_doctor_patients_from_firestore(doctor_id)
+#     if patient_id not in patient_ids:
+#         raise HTTPException(status_code=403, detail="Access denied")
+    
+#     # Update patient status in Firestore
+#     if db is None:
+#         return {"message": "Patient status updated (mock)", "status": status}
+    
+#     try:
+#         patient = get_patient_data(patient_id)
+#         if patient:
+#             patient["status"] = status
+#             doc_ref = db.collection("patients").document(patient_id)
+#             doc_ref.set(patient)
+#         return {"message": "Patient status updated", "status": status}
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Error updating status: {str(e)}")
+
+@router.get("/doctor/{doctor_id}/patients/active")
+def get_active_patients(doctor_id: str):
+    """Return only the active patients for a specific doctor."""
+    
+    # Which patients belong to this doctor?
     patient_ids = get_doctor_patients_from_firestore(doctor_id)
-    if patient_id not in patient_ids:
-        raise HTTPException(status_code=403, detail="Access denied")
+    if not patient_ids:
+        return []
     
-    # Update patient status in Firestore
-    if db is None:
-        return {"message": "Patient status updated (mock)", "status": status}
+    active_patients = []
     
-    try:
+    for patient_id in patient_ids:
         patient = get_patient_data(patient_id)
-        if patient:
-            patient["status"] = status
-            doc_ref = db.collection("patients").document(patient_id)
-            doc_ref.set(patient)
-        return {"message": "Patient status updated", "status": status}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error updating status: {str(e)}")
+        if not patient:
+            continue
+        
+        status_info = patient.get("status", {})
+        if status_info.get("patient_category") != "active":
+            continue
+        
+        personal_info = patient.get("personal_info", {})
+        medical_info = patient.get("medical_info", {})
+        visits = patient.get("doctor_visits", [])
+        
+        last_visit = visits[-1]["visit_date"] if visits else "N/A"
+        
+        active_patients.append({
+            "id": patient_id,
+            "name": personal_info.get("name", ""),
+            "age": personal_info.get("age", 0),
+            "gender": personal_info.get("gender", ""),
+            "blood_group": personal_info.get("blood_type", "N/A"),
+            "allergies": [a["name"] for a in medical_info.get("allergies", [])],
+            "chronic_conditions": [c["condition"] for c in medical_info.get("conditions", [])],
+            "last_visit": last_visit,
+            "next_appointment": personal_info.get("next_appointment_id", ""),
+            "avatar": "/placeholder.svg",
+            "status": "active"
+        })
+    
+    return active_patients

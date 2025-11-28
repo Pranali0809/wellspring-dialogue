@@ -27,6 +27,7 @@ class DoctorInfo(BaseModel):
 @router.get("/doctor/{doctor_id}")
 def get_doctor_info(doctor_id: str):
     """Fetch doctor info from Firestore doctors collection"""
+    print("getting doc",{doctor_id})
     if db is None:
         doctor = mock_doctors_db.get(doctor_id)
         if not doctor:
@@ -36,13 +37,13 @@ def get_doctor_info(doctor_id: str):
     try:
         doc_ref = db.collection("doctors").document(doctor_id)
         doc = doc_ref.get()
-        
+        print("fghj")
         if not doc.exists:
             doctor = mock_doctors_db.get(doctor_id)
             if not doctor:
                 raise HTTPException(status_code=404, detail="Doctor not found")
             return doctor
-        
+        print(doc)
         doctor_data = doc.to_dict()
         doctor_data["doctor_id"] = doc.id
         return doctor_data
@@ -52,20 +53,20 @@ def get_doctor_info(doctor_id: str):
             raise HTTPException(status_code=404, detail=f"Doctor not found: {str(e)}")
         return doctor
 
-@router.put("/doctor/{doctor_id}")
-def update_doctor_info(doctor_id: str, doctor: DoctorInfo):
-    """Update doctor info in Firestore"""
-    if db is None:
-        doctor_dict = doctor.dict()
-        mock_doctors_db[doctor_id] = doctor_dict
-        return {"message": "Doctor info updated successfully (mock)", "doctor": doctor_dict}
+# @router.put("/doctor/{doctor_id}")
+# def update_doctor_info(doctor_id: str, doctor: DoctorInfo):
+#     """Update doctor info in Firestore"""
+#     if db is None:
+#         doctor_dict = doctor.dict()
+#         mock_doctors_db[doctor_id] = doctor_dict
+#         return {"message": "Doctor info updated successfully (mock)", "doctor": doctor_dict}
     
-    try:
-        doc_ref = db.collection("doctors").document(doctor_id)
-        doctor_dict = doctor.dict()
-        doc_ref.set(doctor_dict)
-        return {"message": "Doctor info updated successfully", "doctor": doctor_dict}
-    except Exception as e:
-        doctor_dict = doctor.dict()
-        mock_doctors_db[doctor_id] = doctor_dict
-        return {"message": f"Doctor updated in mock storage: {str(e)}", "doctor": doctor_dict}
+#     try:
+#         doc_ref = db.collection("doctors").document(doctor_id)
+#         doctor_dict = doctor.dict()
+#         doc_ref.set(doctor_dict)
+#         return {"message": "Doctor info updated successfully", "doctor": doctor_dict}
+#     except Exception as e:
+#         doctor_dict = doctor.dict()
+#         mock_doctors_db[doctor_id] = doctor_dict
+#         return {"message": f"Doctor updated in mock storage: {str(e)}", "doctor": doctor_dict}

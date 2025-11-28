@@ -136,8 +136,8 @@ export const doctorApi = {
   getInfo: (doctorId: string) =>
     apiCall<any>(`/doctor/${doctorId}`),
   
-  updateInfo: (doctorId: string, data: any) =>
-    apiCall(`/doctor/${doctorId}`, 'PUT', data),
+  // updateInfo: (doctorId: string, data: any) =>
+  //   apiCall(`/doctor/${doctorId}`, 'PUT', data),
   
   getPatients: (doctorId: string) =>
     apiCall<any[]>(`/doctor/${doctorId}/patients`),
@@ -145,26 +145,26 @@ export const doctorApi = {
   getPatientDetail: (doctorId: string, patientId: string) =>
     apiCall<any>(`/doctor/${doctorId}/patients/${patientId}`),
   
-  updatePatientStatus: (doctorId: string, patientId: string, status: any) =>
-    apiCall(`/doctor/${doctorId}/patients/${patientId}/status`, 'PUT', status),
+  // updatePatientStatus: (doctorId: string, patientId: string, status: any) =>
+  //   apiCall(`/doctor/${doctorId}/patients/${patientId}/status`, 'PUT', status),
   
   getNotes: (doctorId: string, patientId: string) =>
     apiCall<any[]>(`/doctor/${doctorId}/patients/${patientId}/notes`),
   
-  createNote: (doctorId: string, patientId: string, note: any) =>
-    apiCall(`/doctor/${doctorId}/patients/${patientId}/notes`, 'POST', note),
+  // createNote: (doctorId: string, patientId: string, note: any) =>
+  //   apiCall(`/doctor/${doctorId}/patients/${patientId}/notes`, 'POST', note),
   
-  updateNote: (doctorId: string, patientId: string, noteId: string, note: any) =>
-    apiCall(`/doctor/${doctorId}/patients/${patientId}/notes/${noteId}`, 'PUT', note),
+  // updateNote: (doctorId: string, patientId: string, noteId: string, note: any) =>
+  //   apiCall(`/doctor/${doctorId}/patients/${patientId}/notes/${noteId}`, 'PUT', note),
   
-  deleteNote: (doctorId: string, patientId: string, noteId: string) =>
-    apiCall(`/doctor/${doctorId}/patients/${patientId}/notes/${noteId}`, 'DELETE'),
+  // deleteNote: (doctorId: string, patientId: string, noteId: string) =>
+  //   apiCall(`/doctor/${doctorId}/patients/${patientId}/notes/${noteId}`, 'DELETE'),
   
   getTodayAppointments: (doctorId: string) =>
     apiCall<any>(`/doctor/${doctorId}/appointments/today`),
   
-  updateTodaySchedule: (doctorId: string, schedule: any) =>
-    apiCall(`/doctor/${doctorId}/appointments/today`, 'PUT', schedule),
+  // updateTodaySchedule: (doctorId: string, schedule: any) =>
+  //   apiCall(`/doctor/${doctorId}/appointments/today`, 'PUT', schedule),
   
   getActivePatients: (doctorId: string) =>
     apiCall<any>(`/doctor/${doctorId}/patients/active`),

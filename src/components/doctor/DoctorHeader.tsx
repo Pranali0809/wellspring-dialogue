@@ -16,7 +16,9 @@ export const DoctorHeader = ({ doctorId }: DoctorHeaderProps) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.log("getting doc");
         const [info, appts, patients] = await Promise.all([
+          
           doctorApi.getInfo(doctorId),
           doctorApi.getTodayAppointments(doctorId),
           doctorApi.getActivePatients(doctorId)

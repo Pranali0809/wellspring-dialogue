@@ -3,44 +3,28 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime, date
 from firestore_client import db
+from google.cloud.firestore import FieldFilter
+
 
 router = APIRouter()
 
-# Mock data for appointments
-mock_appointments_db = {
-    "doctor_1": [
-        {
-            "appointment_id": "apt_001",
-            "patient_id": "patient_1",
-            "doctor_id": "doctor_1",
-            "date": str(date.today()),
-            "time": "09:00",
-            "status": "completed",
-            "type": "checkup"
-        },
-        {
-            "appointment_id": "apt_002",
-            "patient_id": "patient_1",
-            "doctor_id": "doctor_1",
-            "date": str(date.today()),
-            "time": "14:00",
-            "status": "pending",
-            "type": "follow-up"
-        }
-    ]
-}
 
 # Helper to get appointments from Firestore
 def get_doctor_appointments_from_firestore(doctor_id: str, date_filter: str = None):
     """Get all appointments for a doctor, optionally filtered by date"""
-    if db is None:
-        return mock_appointments_db.get(doctor_id, [])
+    # if db is None:
+    #     return mock_appointments_db.get(doctor_id, [])
     
     try:
-        appointments_ref = db.collection("appointments").where("doctor_id", "==", doctor_id)
-        
+        appointments_ref = db.collection("appointments").where(
+    filter=FieldFilter("doctor_id", "==", doctor_id)
+)
+
         if date_filter:
-            appointments_ref = appointments_ref.where("date", "==", date_filter)
+            appointments_ref = appointments_ref.where(
+        filter=FieldFilter("date", "==", date_filter)
+)
+
         
         appointments = []
         for appt_doc in appointments_ref.stream():
@@ -49,9 +33,10 @@ def get_doctor_appointments_from_firestore(doctor_id: str, date_filter: str = No
             appointments.append(appt_data)
         
         return appointments
+
     except Exception as e:
         print(f"Error getting appointments: {str(e)}")
-        return mock_appointments_db.get(doctor_id, [])
+        # return mock_appointments_db.get(doctor_id, [])
 
 @router.get("/doctor/{doctor_id}/appointments/today")
 def get_today_appointments(doctor_id: str):
@@ -70,56 +55,56 @@ def get_today_appointments(doctor_id: str):
         "appointments": today_appointments
     }
 
-@router.get("/doctor/{doctor_id}/appointments")
-def get_all_appointments(doctor_id: str):
-    """Get all appointments for a doctor"""
-    appointments = get_doctor_appointments_from_firestore(doctor_id)
-    return appointments
+# @router.get("/doctor/{doctor_id}/appointments")
+# def get_all_appointments(doctor_id: str):
+#     """Get all appointments for a doctor"""
+#     appointments = get_doctor_appointments_from_firestore(doctor_id)
+#     return appointments
 
-@router.get("/doctor/{doctor_id}/patients/active")
-def get_active_patients(doctor_id: str):
-    """Get active and critical patients for a doctor"""
-    if db is None:
-        return {
-            "active_patients": [],
-            "critical_patients": []
-        }
+# @router.get("/doctor/{doctor_id}/patients/active")
+# def get_active_patients(doctor_id: str):
+#     """Get active and critical patients for a doctor"""
+#     if db is None:
+#         return {
+#             "active_patients": [],
+#             "critical_patients": []
+#         }
     
-    try:
-        # Get patient IDs for this doctor
-        from doctor_patients import get_doctor_patients_from_firestore, get_patient_data
-        patient_ids = get_doctor_patients_from_firestore(doctor_id)
+#     try:
+#         # Get patient IDs for this doctor
+#         from doctor_patients import get_doctor_patients_from_firestore, get_patient_data
+#         patient_ids = get_doctor_patients_from_firestore(doctor_id)
         
-        active_patients = []
-        critical_patients = []
+#         active_patients = []
+#         critical_patients = []
         
-        for patient_id in patient_ids:
-            patient = get_patient_data(patient_id)
-            if not patient:
-                continue
+#         for patient_id in patient_ids:
+#             patient = get_patient_data(patient_id)
+#             if not patient:
+#                 continue
             
-            personal_info = patient.get("personal_info", {})
-            status_info = patient.get("status", {})
-            category = status_info.get("patient_category", "normal")
+#             personal_info = patient.get("personal_info", {})
+#             status_info = patient.get("status", {})
+#             category = status_info.get("patient_category", "normal")
             
-            patient_summary = {
-                "patient_id": patient_id,
-                "name": personal_info.get("name", ""),
-                "status": category
-            }
+#             patient_summary = {
+#                 "patient_id": patient_id,
+#                 "name": personal_info.get("name", ""),
+#                 "status": category
+#             }
             
-            if category == "active":
-                active_patients.append(patient_summary)
-            elif category in ["critical-warning", "critical-danger"]:
-                critical_patients.append(patient_summary)
+#             if category == "active":
+#                 active_patients.append(patient_summary)
+#             elif category in ["critical-warning", "critical-danger"]:
+#                 critical_patients.append(patient_summary)
         
-        return {
-            "active_patients": active_patients,
-            "critical_patients": critical_patients
-        }
-    except Exception as e:
-        print(f"Error getting active patients: {str(e)}")
-        return {
-            "active_patients": [],
-            "critical_patients": []
-        }
+#         return {
+#             "active_patients": active_patients,
+#             "critical_patients": critical_patients
+#         }
+#     except Exception as e:
+#         print(f"Error getting active patients: {str(e)}")
+#         return {
+#             "active_patients": [],
+#             "critical_patients": []
+#         }
