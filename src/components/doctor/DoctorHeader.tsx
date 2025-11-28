@@ -16,7 +16,6 @@ export const DoctorHeader = ({ doctorId }: DoctorHeaderProps) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log("getting doc");
         const [info, appts, patients] = await Promise.all([
           
           doctorApi.getInfo(doctorId),
@@ -24,8 +23,14 @@ export const DoctorHeader = ({ doctorId }: DoctorHeaderProps) => {
           doctorApi.getActivePatients(doctorId)
         ]);
         setDoctorInfo(info);
+        console.log("info", info);
+        console.log("appts", appts);
+        console.log("patients", patients);
         setAppointments(appts);
         setActivePatients(patients);
+        console.log("doctorInfo", doctorInfo);
+        console.log("appointments", appointments);
+        console.log("activePatients", activePatients);
       } catch (error) {
         console.error("Failed to fetch doctor data:", error);
       }

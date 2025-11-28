@@ -23,7 +23,7 @@ from doctor_appointments import router as doctor_appointments_router
 from agent_assessment import router as agent_assessment_router
 mock_appointments_db = [
     {
-        "appointment_id": "apt_001",
+        "appointment_id": "visit_1",
         "doctor_id": "doctor_1",
         "patient_id": "patient_1",
         "date": str(date.today()),
@@ -32,46 +32,8 @@ mock_appointments_db = [
         "reason": "Routine checkup",
         "location": "Room 102"
     },
-    {
-        "appointment_id": "apt_002",
-        "doctor_id": "doctor_1",
-        "patient_id": "patient_2",
-        "date": str(date.today()),
-        "time": "11:00",
-        "status": "upcoming",
-        "reason": "Follow-up visit",
-        "location": "Room 102"
-    },
-    {
-        "appointment_id": "apt_003",
-        "doctor_id": "doctor_1",
-        "patient_id": "patient_3",
-        "date": str(date.today()),
-        "time": "14:15",
-        "status": "upcoming",
-        "reason": "Lab report discussion",
-        "location": "Room 103"
-    },
-    {
-        "appointment_id": "apt_004",
-        "doctor_id": "doctor_1",
-        "patient_id": "patient_4",
-        "date": str(date.today()),
-        "time": "16:00",
-        "status": "completed",
-        "reason": "Chest discomfort",
-        "location": "Room 104"
-    },
-    {
-        "appointment_id": "apt_005",
-        "doctor_id": "doctor_1",
-        "patient_id": "patient_1",
-        "date": str(date.today()),
-        "time": "10:45",
-        "status": "upcoming",
-        "reason": "Medication review",
-        "location": "Room 102"
-    }
+   
+    
 ]
 
 
@@ -108,6 +70,7 @@ app.include_router(doctor_appointments_router, prefix="/api", tags=["Doctor Appo
 app.include_router(agent_assessment_router, prefix="/api", tags=["Agent Assessment"])
 
 
+app.include_router(doctor_appointments_router, prefix="/api", tags=["Doctor Appointments"])
 
 @app.get("/")
 def root():
@@ -316,9 +279,7 @@ def seed_patient():
             }
         ],
         "appointments": [
-            {"appointment_id": "apt_001"},
-            {"appointment_id": "apt_003"},
-            {"appointment_id": "apt_004"}
+            {"appointment_id": "visit_1"},
         ],
         "status": {
             "patient_category": "active"
@@ -334,7 +295,7 @@ def seed_patient():
 # Invoke-WebRequest -Uri "http://localhost:8000/api/seed-patient" -Method POST
 
 @app.post("/api/seed-doctor")
-def seed_patient():
+def seed_doctor():
     print("🔥 Seeding doctor data")
     """Insert a full mock doctor object into Firestore."""
     doctor_id = "doctor_1"   # or any ID you want

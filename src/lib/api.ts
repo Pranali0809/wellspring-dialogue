@@ -142,8 +142,8 @@ export const doctorApi = {
   getPatients: (doctorId: string) =>
     apiCall<any[]>(`/doctor/${doctorId}/patients`),
   
-  getPatientDetail: (doctorId: string, patientId: string) =>
-    apiCall<any>(`/doctor/${doctorId}/patients/${patientId}`),
+  // getPatientDetail: (doctorId: string, patientId: string) =>
+  //   apiCall<any>(`/doctor/${doctorId}/patients/${patientId}`),
   
   // updatePatientStatus: (doctorId: string, patientId: string, status: any) =>
   //   apiCall(`/doctor/${doctorId}/patients/${patientId}/status`, 'PUT', status),

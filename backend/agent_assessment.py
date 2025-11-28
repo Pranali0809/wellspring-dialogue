@@ -33,12 +33,13 @@ async def start_agent(appointment_id: str):
     Start a new assessment agent session for an appointment.
     """
     try:
+        print("Starting agent for appointment:", appointment_id)
         # Create new agent instance
         agent = SubjectiveAssessmentAgent()
         
         # Start the assessment
         first_message = agent.start_assessment()
-        
+        print("First message from agent:", first_message)
         # Generate session ID
         agent_session_id = f"{appointment_id}_{len(active_sessions)}"
         
@@ -48,6 +49,7 @@ async def start_agent(appointment_id: str):
         # Store session info in Firestore
         if db:
             appointment_ref = db.collection("appointments").document(appointment_id)
+            print("appointment",appointment_ref)
             appointment_ref.update({
                 "agent_session_id": agent_session_id,
                 "pre_assessment": {

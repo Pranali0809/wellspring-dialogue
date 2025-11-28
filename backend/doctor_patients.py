@@ -8,9 +8,7 @@ router = APIRouter()
 # Helper to get all patients for a doctor from Firestore
 def get_doctor_patients_from_firestore(doctor_id: str):
     """Get all patients who have appointments or visits with this doctor"""
-    if db is None:
-        return []
-    
+
     try:
         patient_ids = set()
         
@@ -30,7 +28,7 @@ def get_doctor_patients_from_firestore(doctor_id: str):
                 if visit.get("doctor_id") == doctor_id:
                     patient_ids.add(patient_doc.id)
                     break
-        
+        print("patient_ids in doc", patient_ids)
         return list(patient_ids)
     except Exception as e:
         print(f"Error getting doctor patients: {str(e)}")
@@ -118,62 +116,62 @@ def get_doctor_patients(doctor_id: str):
     
     return patients
 
-@router.get("/doctor/{doctor_id}/patients/{patient_id}")
-def get_patient_detail(doctor_id: str, patient_id: str):
-    """Get detailed patient view for doctor"""
-    # Check if doctor has access to this patient
-    patient_ids = get_doctor_patients_from_firestore(doctor_id)
-    if patient_id not in patient_ids:
-        raise HTTPException(status_code=403, detail="Access denied")
+# @router.get("/doctor/{doctor_id}/patients/{patient_id}")
+# def get_patient_detail(doctor_id: str, patient_id: str):
+#     """Get detailed patient view for doctor"""
+#     # Check if doctor has access to this patient
+#     patient_ids = get_doctor_patients_from_firestore(doctor_id)
+#     if patient_id not in patient_ids:
+#         raise HTTPException(status_code=403, detail="Access denied")
     
-    patient = get_patient_data(patient_id)
-    if not patient:
-        raise HTTPException(status_code=404, detail="Patient not found")
+#     patient = get_patient_data(patient_id)
+#     if not patient:
+#         raise HTTPException(status_code=404, detail="Patient not found")
     
-    personal_info = patient.get("personal_info", {})
-    medical_info = patient.get("medical_info", {})
-    prescriptions = patient.get("prescriptions", [])
-    symptoms = patient.get("symptoms", [])
+#     personal_info = patient.get("personal_info", {})
+#     medical_info = patient.get("medical_info", {})
+#     prescriptions = patient.get("prescriptions", [])
+#     symptoms = patient.get("symptoms", [])
     
-    # Build history timeline from symptoms and conditions
-    history = []
-    for symptom in symptoms:
-        history.append({
-            "date": symptom.get("date", ""),
-            "type": "symptom",
-            "description": symptom.get("name", "")
-        })
+#     # Build history timeline from symptoms and conditions
+#     history = []
+#     for symptom in symptoms:
+#         history.append({
+#             "date": symptom.get("date", ""),
+#             "type": "symptom",
+#             "description": symptom.get("name", "")
+#         })
     
-    for condition in medical_info.get("conditions", []):
-        history.append({
-            "date": condition.get("diagnosed_date", "2024-01-01"),
-            "type": "condition",
-            "description": condition.get("condition", "")
-        })
+#     for condition in medical_info.get("conditions", []):
+#         history.append({
+#             "date": condition.get("diagnosed_date", "2024-01-01"),
+#             "type": "condition",
+#             "description": condition.get("condition", "")
+#         })
     
-    # Sort by date
-    history.sort(key=lambda x: x["date"], reverse=True)
+#     # Sort by date
+#     history.sort(key=lambda x: x["date"], reverse=True)
     
-    return {
-        "id": patient_id,
-        "name": personal_info.get("name", ""),
-        "age": personal_info.get("age", 0),
-        "gender": personal_info.get("gender", ""),
-        "blood_group": personal_info.get("blood_type", "N/A"),
-        "allergies": [a["name"] for a in medical_info.get("allergies", [])],
-        "chronic_conditions": [c["condition"] for c in medical_info.get("conditions", [])],
-        "history": history,
-        "prescriptions": [
-            {
-                "name": p.get("medication", ""),
-                "is_active": p.get("status") == "active",
-                "start_date": "2024-01-01",
-                "end_date": p.get("refill_date", ""),
-                "frequency": f"{p.get('dosage', 'N/A')}"
-            }
-            for p in prescriptions
-        ]
-    }
+#     return {
+#         "id": patient_id,
+#         "name": personal_info.get("name", ""),
+#         "age": personal_info.get("age", 0),
+#         "gender": personal_info.get("gender", ""),
+#         "blood_group": personal_info.get("blood_type", "N/A"),
+#         "allergies": [a["name"] for a in medical_info.get("allergies", [])],
+#         "chronic_conditions": [c["condition"] for c in medical_info.get("conditions", [])],
+#         "history": history,
+#         "prescriptions": [
+#             {
+#                 "name": p.get("medication", ""),
+#                 "is_active": p.get("status") == "active",
+#                 "start_date": "2024-01-01",
+#                 "end_date": p.get("refill_date", ""),
+#                 "frequency": f"{p.get('dosage', 'N/A')}"
+#             }
+#             for p in prescriptions
+#         ]
+#     }
 
 # @router.put("/doctor/{doctor_id}/patients/{patient_id}/status")
 # def update_patient_status(doctor_id: str, patient_id: str, status: dict):
@@ -198,42 +196,45 @@ def get_patient_detail(doctor_id: str, patient_id: str):
 
 @router.get("/doctor/{doctor_id}/patients/active")
 def get_active_patients(doctor_id: str):
-    """Return only the active patients for a specific doctor."""
-    
-    # Which patients belong to this doctor?
+    """Return structured object with active + critical patients."""
     patient_ids = get_doctor_patients_from_firestore(doctor_id)
-    if not patient_ids:
-        return []
     
-    active_patients = []
-    
+    active_list = []
+    critical_list = []
+
     for patient_id in patient_ids:
         patient = get_patient_data(patient_id)
         if not patient:
             continue
-        
+
         status_info = patient.get("status", {})
-        if status_info.get("patient_category") != "active":
-            continue
-        
+        category = status_info.get("patient_category", "normal")
+
         personal_info = patient.get("personal_info", {})
         medical_info = patient.get("medical_info", {})
         visits = patient.get("doctor_visits", [])
-        
         last_visit = visits[-1]["visit_date"] if visits else "N/A"
-        
-        active_patients.append({
+
+        patient_obj = {
             "id": patient_id,
             "name": personal_info.get("name", ""),
             "age": personal_info.get("age", 0),
             "gender": personal_info.get("gender", ""),
-            "blood_group": personal_info.get("blood_type", "N/A"),
+            "blood_group": personal_info.get("blood_type", ""),
             "allergies": [a["name"] for a in medical_info.get("allergies", [])],
             "chronic_conditions": [c["condition"] for c in medical_info.get("conditions", [])],
             "last_visit": last_visit,
             "next_appointment": personal_info.get("next_appointment_id", ""),
             "avatar": "/placeholder.svg",
-            "status": "active"
-        })
-    
-    return active_patients
+            "status": category
+        }
+
+        if category == "critical":
+            critical_list.append(patient_obj)
+        elif category == "active":
+            active_list.append(patient_obj)
+
+    return {
+        "active_patients": active_list,
+        "critical_patients": critical_list
+    }

@@ -27,7 +27,6 @@ class DoctorInfo(BaseModel):
 @router.get("/doctor/{doctor_id}")
 def get_doctor_info(doctor_id: str):
     """Fetch doctor info from Firestore doctors collection"""
-    print("getting doc",{doctor_id})
     if db is None:
         doctor = mock_doctors_db.get(doctor_id)
         if not doctor:
@@ -35,15 +34,13 @@ def get_doctor_info(doctor_id: str):
         return doctor
     
     try:
-        doc_ref = db.collection("doctors").document(doctor_id)
+        doc_ref = db.collection("doctor").document(doctor_id)
         doc = doc_ref.get()
-        print("fghj")
         if not doc.exists:
             doctor = mock_doctors_db.get(doctor_id)
             if not doctor:
                 raise HTTPException(status_code=404, detail="Doctor not found")
             return doctor
-        print(doc)
         doctor_data = doc.to_dict()
         doctor_data["doctor_id"] = doc.id
         return doctor_data
