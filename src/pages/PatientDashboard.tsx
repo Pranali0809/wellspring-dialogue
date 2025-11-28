@@ -4,6 +4,7 @@ import { PrescriptionTracking } from "@/components/patient/PrescriptionTracking"
 import { VaccineTracking } from "@/components/patient/VaccineTracking";
 import { MedicalHistoryOverview } from "@/components/patient/MedicalHistoryOverview";
 import { DoctorVisits } from "@/components/patient/DoctorVisits";
+import { PatientAppointments } from "@/components/patient/PatientAppointments";
 import { QuickActions } from "@/components/patient/QuickActions";
 import { PatientHeader } from "@/components/patient/PatientHeader";
 import { useParams, useNavigate } from "react-router-dom";
@@ -43,11 +44,14 @@ const PatientDashboard = () => {
             <VaccineTracking />
           </div>
 
-          {/* Row 3: Medical History + Doctor Visits */}
+          {/* Row 3: Appointments + Medical History */}
+          <div className="lg:col-span-4">
+            <PatientAppointments patientId={patientId || 'patient_1'} />
+          </div>
           <div className="lg:col-span-4">
             <MedicalHistoryOverview />
           </div>
-          <div className="lg:col-span-8">
+          <div className="lg:col-span-4">
             <DoctorVisits />
           </div>
         </div>
