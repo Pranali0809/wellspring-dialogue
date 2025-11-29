@@ -17,11 +17,17 @@ class DiagnosisAgentOutput(BaseModel):
     recommended_tests: List[dict]
     doctor_action_items: List[dict]
 
+class ManualEntries(BaseModel):
+    diagnoses: List[str] = []
+    prescriptions: List[dict] = []
+    tests: List[str] = []
+
 class FinalizeVisitRequest(BaseModel):
     selected_diagnoses: List[str]
     selected_prescriptions: List[dict]
     selected_tests: List[str]
     doctor_notes: str
+    manual_entries: Optional[ManualEntries] = None
 
 @router.post("/appointments/{appointment_id}/upload-audio")
 async def upload_audio(appointment_id: str, file: UploadFile = File(...)):
@@ -166,6 +172,16 @@ async def finalize_visit(appointment_id: str, request: FinalizeVisitRequest):
         
         patient_data = patient_doc.to_dict()
         
+        # Combine selected and manual entries
+        all_diagnoses = request.selected_diagnoses.copy()
+        all_prescriptions = request.selected_prescriptions.copy()
+        all_tests = request.selected_tests.copy()
+        
+        if request.manual_entries:
+            all_diagnoses.extend(request.manual_entries.diagnoses)
+            all_prescriptions.extend(request.manual_entries.prescriptions)
+            all_tests.extend(request.manual_entries.tests)
+        
         # Create visit object
         visit_id = str(uuid.uuid4())
         visit = {
@@ -176,13 +192,14 @@ async def finalize_visit(appointment_id: str, request: FinalizeVisitRequest):
             "specialty": appointment_data.get("doctor_specialty", "General"),
             "date": appointment_data.get("date"),
             "chiefComplaint": appointment_data.get("chief_complaint", ""),
-            "diagnoses": request.selected_diagnoses,
-            "prescriptions": request.selected_prescriptions,
-            "tests_ordered": request.selected_tests,
+            "diagnoses": all_diagnoses,
+            "prescriptions": all_prescriptions,
+            "tests_ordered": all_tests,
             "keyNotes": request.doctor_notes,
             "hasAttachments": False,
             "pre_assessment": appointment_data.get("pre_assessment", {}),
-            "audio_transcript": appointment_data.get("doctor_audio", {}).get("transcript", "")
+            "audio_transcript": appointment_data.get("doctor_audio", {}).get("transcript", ""),
+            "manual_entries": request.manual_entries.dict() if request.manual_entries else {}
         }
         
         # Get existing doctor_visits or initialize
@@ -193,12 +210,12 @@ async def finalize_visit(appointment_id: str, request: FinalizeVisitRequest):
         # Add new visit
         doctor_visits.append(visit)
         
-        # Update patient prescriptions
+        # Update patient prescriptions (including manual entries)
         prescriptions = patient_data.get("prescriptions", [])
         if not isinstance(prescriptions, list):
             prescriptions = []
         
-        for prescription in request.selected_prescriptions:
+        for prescription in all_prescriptions:
             prescriptions.append({
                 "id": str(uuid.uuid4()),
                 "name": prescription.get("name"),
@@ -210,10 +227,57 @@ async def finalize_visit(appointment_id: str, request: FinalizeVisitRequest):
                 "lastTaken": None
             })
         
+        # Update recent activity
+        recent_activity = patient_data.get("recent_activity", [])
+        if not isinstance(recent_activity, list):
+            recent_activity = []
+        
+        recent_activity.extend([
+            {
+                "id": str(uuid.uuid4()),
+                "text": "Doctor completed visit",
+                "date": appointment_data.get("date"),
+                "type": "visit"
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "text": f"Prescriptions updated ({len(all_prescriptions)} medications)",
+                "date": appointment_data.get("date"),
+                "type": "prescription"
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "text": f"Diagnosis: {', '.join(all_diagnoses[:2])}{'...' if len(all_diagnoses) > 2 else ''}",
+                "date": appointment_data.get("date"),
+                "type": "diagnosis"
+            }
+        ])
+        
+        # Update medical conditions
+        medical_info = patient_data.get("medical_info", {})
+        if not isinstance(medical_info, dict):
+            medical_info = {}
+        
+        conditions = medical_info.get("conditions", [])
+        if not isinstance(conditions, list):
+            conditions = []
+        
+        for diagnosis in all_diagnoses:
+            if not any(c.get("condition") == diagnosis for c in conditions):
+                conditions.append({
+                    "condition": diagnosis,
+                    "diagnosed_date": appointment_data.get("date"),
+                    "status": "active"
+                })
+        
+        medical_info["conditions"] = conditions
+        
         # Update patient document
         patient_ref.update({
             "doctor_visits": doctor_visits,
             "prescriptions": prescriptions,
+            "medical_info": medical_info,
+            "recent_activity": recent_activity[-10:],  # Keep last 10 activities
             "total_visits": len(doctor_visits),
             "updated_at": firestore.SERVER_TIMESTAMP
         })
@@ -224,10 +288,11 @@ async def finalize_visit(appointment_id: str, request: FinalizeVisitRequest):
             "converted_to_visit": True,
             "finalized_at": firestore.SERVER_TIMESTAMP,
             "doctor_selections": {
-                "diagnoses": request.selected_diagnoses,
-                "prescriptions": request.selected_prescriptions,
-                "tests": request.selected_tests,
-                "notes": request.doctor_notes
+                "diagnoses": all_diagnoses,
+                "prescriptions": all_prescriptions,
+                "tests": all_tests,
+                "notes": request.doctor_notes,
+                "manual_entries": request.manual_entries.dict() if request.manual_entries else {}
             }
         })
         
