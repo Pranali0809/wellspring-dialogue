@@ -5,7 +5,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Upload, Mic, ChevronDown, ChevronUp, FileAudio, CheckCircle, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Upload, Mic, ChevronDown, ChevronUp, FileAudio, CheckCircle, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { aiAssessmentApi } from "@/lib/api";
 
@@ -13,6 +15,25 @@ interface AudioUploadDiagnosisProps {
   appointmentId: string;
   hasPreAssessment: boolean;
 }
+
+// Hardcoded fallback options
+const FALLBACK_DIAGNOSES = [
+  "Viral Fever",
+  "Gastroenteritis",
+  "Migraine"
+];
+
+const FALLBACK_PRESCRIPTIONS = [
+  { name: "Paracetamol", dosage: "500mg" },
+  { name: "ORS Solution", dosage: "As needed" },
+  { name: "Omeprazole", dosage: "20mg" }
+];
+
+const FALLBACK_TESTS = [
+  "CBC",
+  "CRP",
+  "Urine Routine"
+];
 
 export const AudioUploadDiagnosis = ({ appointmentId, hasPreAssessment }: AudioUploadDiagnosisProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,6 +46,15 @@ export const AudioUploadDiagnosis = ({ appointmentId, hasPreAssessment }: AudioU
   const [selectedTests, setSelectedTests] = useState<string[]>([]);
   const [doctorNotes, setDoctorNotes] = useState("");
   const [isFinalizing, setIsFinalizing] = useState(false);
+  
+  // Manual additions
+  const [manualDiagnoses, setManualDiagnoses] = useState<string[]>([]);
+  const [manualPrescriptions, setManualPrescriptions] = useState<any[]>([]);
+  const [manualTests, setManualTests] = useState<string[]>([]);
+  const [newDiagnosis, setNewDiagnosis] = useState("");
+  const [newMedication, setNewMedication] = useState("");
+  const [newDosage, setNewDosage] = useState("");
+  const [newTest, setNewTest] = useState("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -95,8 +125,37 @@ export const AudioUploadDiagnosis = ({ appointmentId, hasPreAssessment }: AudioU
     );
   };
 
+  const addManualDiagnosis = () => {
+    if (newDiagnosis.trim()) {
+      setManualDiagnoses(prev => [...prev, newDiagnosis.trim()]);
+      setSelectedDiagnoses(prev => [...prev, newDiagnosis.trim()]);
+      setNewDiagnosis("");
+      toast.success("Diagnosis added");
+    }
+  };
+
+  const addManualPrescription = () => {
+    if (newMedication.trim() && newDosage.trim()) {
+      const prescription = { name: newMedication.trim(), dosage: newDosage.trim() };
+      setManualPrescriptions(prev => [...prev, prescription]);
+      setSelectedPrescriptions(prev => [...prev, prescription]);
+      setNewMedication("");
+      setNewDosage("");
+      toast.success("Prescription added");
+    }
+  };
+
+  const addManualTest = () => {
+    if (newTest.trim()) {
+      setManualTests(prev => [...prev, newTest.trim()]);
+      setSelectedTests(prev => [...prev, newTest.trim()]);
+      setNewTest("");
+      toast.success("Test added");
+    }
+  };
+
   const handleFinalizeVisit = async () => {
-    if (selectedDiagnoses.length === 0) {
+    if (selectedDiagnoses.length === 0 && manualDiagnoses.length === 0) {
       toast.error("Please select at least one diagnosis");
       return;
     }
@@ -107,7 +166,12 @@ export const AudioUploadDiagnosis = ({ appointmentId, hasPreAssessment }: AudioU
         selected_diagnoses: selectedDiagnoses,
         selected_prescriptions: selectedPrescriptions,
         selected_tests: selectedTests,
-        doctor_notes: doctorNotes
+        doctor_notes: doctorNotes,
+        manual_entries: {
+          diagnoses: manualDiagnoses,
+          prescriptions: manualPrescriptions,
+          tests: manualTests
+        }
       });
       toast.success("Visit finalized successfully");
       // Optionally reset state or close panel
@@ -218,17 +282,22 @@ export const AudioUploadDiagnosis = ({ appointmentId, hasPreAssessment }: AudioU
               </div>
             )}
 
-            {/* Diagnosis Suggestions */}
-            {diagnosisData && (
+            {/* Diagnosis Suggestions or Fallback */}
+            {(diagnosisData || transcript) && (
               <div className="space-y-6">
                 {/* Possible Diagnoses */}
                 <div className="space-y-3">
                   <h4 className="font-semibold flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-primary" />
-                    Possible Diagnoses
+                    {diagnosisData ? "AI-Suggested Diagnoses" : "Fallback Diagnoses"}
                   </h4>
+                  {!diagnosisData && (
+                    <Badge variant="outline" className="mb-2">
+                      Using fallback options - AI analysis not available
+                    </Badge>
+                  )}
                   <div className="space-y-2">
-                    {diagnosisData.possible_diagnoses?.map((diagnosis: any, idx: number) => (
+                    {(diagnosisData?.possible_diagnoses || FALLBACK_DIAGNOSES.map(d => ({ name: d }))).map((diagnosis: any, idx: number) => (
                       <div
                         key={idx}
                         className="flex items-start gap-3 p-3 bg-card-soft rounded-lg hover:bg-hover transition-colors"
@@ -242,6 +311,38 @@ export const AudioUploadDiagnosis = ({ appointmentId, hasPreAssessment }: AudioU
                         </label>
                       </div>
                     ))}
+                    {manualDiagnoses.map((diagnosis, idx) => (
+                      <div
+                        key={`manual-${idx}`}
+                        className="flex items-start gap-3 p-3 bg-primary-soft rounded-lg border-l-2 border-primary"
+                      >
+                        <Checkbox checked={true} disabled />
+                        <label className="text-sm flex-1">
+                          {diagnosis}
+                          <Badge variant="outline" className="ml-2 text-xs">Custom</Badge>
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Add Custom Diagnosis */}
+                  <div className="pt-2 border-t border-border">
+                    <div className="flex gap-2">
+                      <Input
+                        value={newDiagnosis}
+                        onChange={(e) => setNewDiagnosis(e.target.value)}
+                        placeholder="Add custom diagnosis..."
+                        onKeyPress={(e) => e.key === 'Enter' && addManualDiagnosis()}
+                      />
+                      <Button
+                        onClick={addManualDiagnosis}
+                        variant="outline"
+                        size="sm"
+                        disabled={!newDiagnosis.trim()}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -249,10 +350,10 @@ export const AudioUploadDiagnosis = ({ appointmentId, hasPreAssessment }: AudioU
                 <div className="space-y-3">
                   <h4 className="font-semibold flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-primary" />
-                    Suggested Prescriptions
+                    {diagnosisData ? "AI-Suggested Prescriptions" : "Fallback Prescriptions"}
                   </h4>
                   <div className="space-y-2">
-                    {diagnosisData.suggested_prescriptions?.map((prescription: any, idx: number) => (
+                    {(diagnosisData?.suggested_prescriptions || FALLBACK_PRESCRIPTIONS).map((prescription: any, idx: number) => (
                       <div
                         key={idx}
                         className="flex items-start gap-3 p-3 bg-card-soft rounded-lg hover:bg-hover transition-colors"
@@ -267,6 +368,47 @@ export const AudioUploadDiagnosis = ({ appointmentId, hasPreAssessment }: AudioU
                         </label>
                       </div>
                     ))}
+                    {manualPrescriptions.map((prescription, idx) => (
+                      <div
+                        key={`manual-${idx}`}
+                        className="flex items-start gap-3 p-3 bg-primary-soft rounded-lg border-l-2 border-primary"
+                      >
+                        <Checkbox checked={true} disabled />
+                        <label className="text-sm flex-1">
+                          <span className="font-medium">{prescription.name}</span>
+                          <span className="text-muted-foreground"> - {prescription.dosage}</span>
+                          <Badge variant="outline" className="ml-2 text-xs">Custom</Badge>
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Add Custom Prescription */}
+                  <div className="pt-2 border-t border-border">
+                    <Label className="text-xs text-muted-foreground mb-2 block">Add Custom Prescription</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={newMedication}
+                        onChange={(e) => setNewMedication(e.target.value)}
+                        placeholder="Medication name..."
+                        className="flex-1"
+                      />
+                      <Input
+                        value={newDosage}
+                        onChange={(e) => setNewDosage(e.target.value)}
+                        placeholder="Dosage..."
+                        className="w-32"
+                        onKeyPress={(e) => e.key === 'Enter' && addManualPrescription()}
+                      />
+                      <Button
+                        onClick={addManualPrescription}
+                        variant="outline"
+                        size="sm"
+                        disabled={!newMedication.trim() || !newDosage.trim()}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -274,10 +416,10 @@ export const AudioUploadDiagnosis = ({ appointmentId, hasPreAssessment }: AudioU
                 <div className="space-y-3">
                   <h4 className="font-semibold flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-primary" />
-                    Recommended Tests
+                    {diagnosisData ? "AI-Recommended Tests" : "Fallback Tests"}
                   </h4>
                   <div className="space-y-2">
-                    {diagnosisData.recommended_tests?.map((test: any, idx: number) => (
+                    {(diagnosisData?.recommended_tests || FALLBACK_TESTS.map(t => ({ name: t }))).map((test: any, idx: number) => (
                       <div
                         key={idx}
                         className="flex items-start gap-3 p-3 bg-card-soft rounded-lg hover:bg-hover transition-colors"
@@ -291,11 +433,43 @@ export const AudioUploadDiagnosis = ({ appointmentId, hasPreAssessment }: AudioU
                         </label>
                       </div>
                     ))}
+                    {manualTests.map((test, idx) => (
+                      <div
+                        key={`manual-${idx}`}
+                        className="flex items-start gap-3 p-3 bg-primary-soft rounded-lg border-l-2 border-primary"
+                      >
+                        <Checkbox checked={true} disabled />
+                        <label className="text-sm flex-1">
+                          {test}
+                          <Badge variant="outline" className="ml-2 text-xs">Custom</Badge>
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Add Custom Test */}
+                  <div className="pt-2 border-t border-border">
+                    <div className="flex gap-2">
+                      <Input
+                        value={newTest}
+                        onChange={(e) => setNewTest(e.target.value)}
+                        placeholder="Add custom test..."
+                        onKeyPress={(e) => e.key === 'Enter' && addManualTest()}
+                      />
+                      <Button
+                        onClick={addManualTest}
+                        variant="outline"
+                        size="sm"
+                        disabled={!newTest.trim()}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Doctor Action Items */}
-                {diagnosisData.doctor_action_items && diagnosisData.doctor_action_items.length > 0 && (
+                {diagnosisData?.doctor_action_items && diagnosisData.doctor_action_items.length > 0 && (
                   <div className="space-y-3">
                     <h4 className="font-semibold">Action Items:</h4>
                     <div className="p-3 bg-primary-soft rounded-lg space-y-2">
@@ -306,21 +480,22 @@ export const AudioUploadDiagnosis = ({ appointmentId, hasPreAssessment }: AudioU
                   </div>
                 )}
 
-                {/* Doctor Notes */}
+                {/* Free Text Consultation Notes */}
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-sm">Additional Notes:</h4>
+                  <h4 className="font-semibold text-sm">Consultation Notes:</h4>
                   <Textarea
                     value={doctorNotes}
                     onChange={(e) => setDoctorNotes(e.target.value)}
-                    placeholder="Enter any additional notes or observations..."
+                    placeholder="Add consultation notes, observations, and recommendations..."
                     rows={4}
+                    className="resize-none"
                   />
                 </div>
 
                 {/* Finalize Button */}
                 <Button
                   onClick={handleFinalizeVisit}
-                  disabled={isFinalizing || selectedDiagnoses.length === 0}
+                  disabled={isFinalizing || (selectedDiagnoses.length === 0 && manualDiagnoses.length === 0)}
                   className="w-full btn-healthcare-primary"
                   size="lg"
                 >
@@ -332,7 +507,7 @@ export const AudioUploadDiagnosis = ({ appointmentId, hasPreAssessment }: AudioU
                   ) : (
                     <>
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      Confirm & Finalize Visit
+                      Confirm & Complete Visit
                     </>
                   )}
                 </Button>
