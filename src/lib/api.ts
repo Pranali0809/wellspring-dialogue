@@ -182,8 +182,22 @@ export const aiAssessmentApi = {
       { agent_session_id: agentSessionId, message }
     ),
   
-  uploadAudio: (appointmentId: string) =>
-    apiCall<any>(`/appointment/${appointmentId}/upload-audio`, 'POST'),
+  uploadAudio: (appointmentId: string, formData: FormData) =>
+    fetch(`${API_BASE_URL}/appointments/${appointmentId}/upload-audio`, {
+      method: 'POST',
+      body: formData
+    }).then(async (response) => {
+      if (!response.ok) {
+        throw new Error(`API call failed: ${response.statusText}`);
+      }
+      return response.json();
+    }),
+  
+  runDiagnosisAgent: (appointmentId: string) =>
+    apiCall<any>(`/appointments/${appointmentId}/run-diagnosis-agent`, 'POST'),
+  
+  finalizeVisit: (appointmentId: string, data: any) =>
+    apiCall(`/appointments/${appointmentId}/finalize-visit`, 'POST', data),
   
   saveDoctorReview: (appointmentId: string, review: any) =>
     apiCall(`/appointment/${appointmentId}/doctor-review`, 'POST', review),

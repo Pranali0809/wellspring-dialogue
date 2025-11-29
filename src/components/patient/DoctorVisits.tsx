@@ -6,7 +6,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { PreAppointmentAssessment } from "@/components/patient/PreAppointmentAssessment";
 import { CalendarDays, Stethoscope, FileText, Paperclip, Search, X, Pill, StickyNote, TestTube, Upload } from "lucide-react";
 import { useState, useEffect } from "react";
 import { doctorVisitsApi } from "@/lib/api";
@@ -378,11 +377,6 @@ export const DoctorVisits = () => {
                     </div>
                   </div>
                 </div>
-
-                <Separator />
-
-                {/* Pre-Appointment AI Assessment */}
-                <PreAppointmentAssessment appointmentId={selectedVisit.id} />
 
                 <Separator />
 

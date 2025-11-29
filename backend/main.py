@@ -21,6 +21,7 @@ from doctor_patients import router as doctor_patients_router
 from doctor_notes import router as doctor_notes_router
 from doctor_appointments import router as doctor_appointments_router
 from agent_assessment import router as agent_assessment_router
+from appointments import router as appointments_router
 mock_appointments_db = [
     {
         "appointment_id": "visit_1",
@@ -68,9 +69,7 @@ app.include_router(doctor_patients_router, prefix="/api", tags=["Doctor Patients
 app.include_router(doctor_notes_router, prefix="/api", tags=["Doctor Notes"])
 app.include_router(doctor_appointments_router, prefix="/api", tags=["Doctor Appointments"])
 app.include_router(agent_assessment_router, prefix="/api", tags=["Agent Assessment"])
-
-
-app.include_router(doctor_appointments_router, prefix="/api", tags=["Doctor Appointments"])
+app.include_router(appointments_router, prefix="/api", tags=["Appointments"])
 
 @app.get("/")
 def root():
