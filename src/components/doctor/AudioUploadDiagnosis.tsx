@@ -74,6 +74,7 @@ export const AudioUploadDiagnosis = ({ appointmentId, hasPreAssessment }: AudioU
       formData.append("file", audioFile);
 
       const result = await aiAssessmentApi.uploadAudio(appointmentId, formData);
+      console.log("Upload result:", result.transcript);
       setTranscript(result.transcript);
       toast.success("Audio uploaded and transcribed successfully");
 

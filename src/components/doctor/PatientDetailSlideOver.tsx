@@ -365,7 +365,7 @@ export const PatientDetailSlideOver = ({ patient, onClose }: PatientDetailSlideO
           <TabsContent value="labs" className="space-y-4">
             {/* Audio Upload & Diagnosis */}
             <AudioUploadDiagnosis 
-              appointmentId={patient.id} 
+              appointmentId={"apt_001"} 
               hasPreAssessment={true} 
             />
 

@@ -156,7 +156,7 @@ export const QuickActions = () => {
                 <h4 className="font-semibold text-destructive mb-1">Emergency</h4>
                 <p className="text-xs text-destructive mb-2">Need immediate medical attention?</p>
                 <Button size="sm" className="bg-destructive text-destructive-foreground hover:opacity-90 w-full">
-                  Call 911
+                  Call 100
                 </Button>
               </div>
             </div>

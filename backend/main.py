@@ -24,7 +24,7 @@ from agent_assessment import router as agent_assessment_router
 from appointments import router as appointments_router
 mock_appointments_db = [
     {
-        "appointment_id": "visit_1",
+        "appointment_id": "apt_001",
         "doctor_id": "doctor_1",
         "patient_id": "patient_1",
         "date": str(date.today()),

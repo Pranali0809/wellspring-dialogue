@@ -10,14 +10,20 @@ interface PatientHeaderProps {
 
 export const PatientHeader = ({ patientId }: PatientHeaderProps) => {
   const [headerData, setHeaderData] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.log(`Fetching header for patient: ${patientId}`);
         const data = await patientHeaderApi.getHeader(patientId);
+        console.log("Header data fetched:", data);
         setHeaderData(data);
+        setError(null);
       } catch (error) {
-        console.error("Failed to fetch header data:", error);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error("Failed to fetch header data:", errorMsg);
+        setError(errorMsg);
       }
     };
     fetchData();
