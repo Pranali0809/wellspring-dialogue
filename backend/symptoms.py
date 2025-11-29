@@ -29,7 +29,7 @@ symptoms_db = {
             "id": "1",
             "name": "Headache",
             "date": "2024-02-20T10:00:00",
-            "severity": "moderate",
+            "severity": "medium",
             "duration": "2 hours",
             "notes": "Mild throbbing pain"
         },
@@ -75,8 +75,8 @@ def get_symptoms(patient_id: str):
         {
             "id": s.get("id", ""),
             "name": s.get("name", ""),
-            "date": s.get("date", ""),
-            "severity": "moderate",  # default
+            "date": s.get("date") or datetime.utcnow().isoformat(),
+            "severity": "medium",  # default
             "duration": "Unknown",  # default
             "notes": s.get("description", "")
         }
@@ -86,17 +86,24 @@ def get_symptoms(patient_id: str):
 
 @router.post("/symptoms/{patient_id}")
 def create_symptom(patient_id: str, symptom: Symptom):
-    if patient_id not in symptoms_db:
-        symptoms_db[patient_id] = []
-    
-    if not symptom.id:
-        symptom.id = str(len(symptoms_db[patient_id]) + 1)
-    
-    symptoms_db[patient_id].append(symptom.dict())
-    # Sort by date
-    symptoms_db[patient_id].sort(key=lambda x: x["date"], reverse=True)
-    
-    return {"message": "Symptom created successfully", "symptom": symptom}
+    patient = get_patient_data(patient_id)
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found in main DB")
+
+    if "symptoms" not in patient:
+        patient["symptoms"] = []
+
+    # assign ID
+    symptom.id = str(len(patient["symptoms"]) + 1)
+
+    # append symptom
+    patient["symptoms"].append(symptom.dict())
+
+    # write to DB
+    if not update_patient_data(patient_id, patient):
+        raise HTTPException(status_code=500, detail="Failed to update DB")
+
+    return {"message": "Symptom saved", "symptom": symptom}
 
 @router.put("/symptoms/{patient_id}/{symptom_id}")
 def update_symptom(patient_id: str, symptom_id: str, symptom: Symptom):
