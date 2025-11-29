@@ -7,8 +7,10 @@ from typing import List, Dict
 # os.environ["GOOGLE_API_KEY"] = "<>"
 #genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 #Replace '' with your actual key inside the quotes
+print("GOOGLE_API_KEY", os.environ.get("GOOGLE_API_KEY"))
+# genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
 
-genai.configure(api_key="AIzaSyBuosi-eGjBTGqgtFJrd400OPCj9McGHyg")
+genai.configure(api_key=os.environ.get("AIzaSyBAxgXVhCyrwjzIdzPI8voYKEUN9oEl4IA"))
 
 class SubjectiveAssessmentAgent:
     def __init__(self):

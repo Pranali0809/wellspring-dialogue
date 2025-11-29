@@ -3,13 +3,12 @@ from pydantic import BaseModel
 from typing import List, Optional
 from firestore_client import db
 from google.cloud import firestore
+from transcripts import get_sample_transcript
 import uuid
+import os
+import tempfile
 
 router = APIRouter()
-
-class AudioUploadResponse(BaseModel):
-    file_url: str
-    transcript: str
 
 class DiagnosisAgentOutput(BaseModel):
     possible_diagnoses: List[dict]
@@ -32,34 +31,39 @@ class FinalizeVisitRequest(BaseModel):
 @router.post("/appointments/{appointment_id}/upload-audio")
 async def upload_audio(appointment_id: str, file: UploadFile = File(...)):
     """
-    Upload audio file for appointment and generate transcript.
-    Stores file in Firestore Storage and transcript in appointment document.
+    Upload audio file for appointment and return hardcoded transcript.
+    Stores file reference and transcript in Firestore.
     """
     try:
-        if not file.filename.endswith(('.mp3', '.wav', '.m4a')):
-            raise HTTPException(status_code=400, detail="Only .mp3, .wav, and .m4a files are supported")
+        if not file.filename.endswith(('.mp3', '.wav', '.m4a', '.ogg', '.flac')):
+            raise HTTPException(status_code=400, detail="Only .mp3, .wav, .m4a, .ogg, and .flac files are supported")
         
-        # TODO: Implement actual file upload to Firestore Storage
-        # TODO: Implement Whisper transcription
+        # Get sample transcript
+        transcript = get_sample_transcript("default")
         
-        # Mock response for now
-        mock_transcript = "Patient reports chest pain that started 2 days ago, describes it as sharp and intermittent, worse with deep breathing. No fever, no radiation. History of hypertension."
-        mock_file_url = f"gs://appointments-audio/{appointment_id}/{file.filename}"
+        # Read and discard file (in production, you'd upload to Cloud Storage)
+        contents = await file.read()
+        
+        # Mock file URL for now (would upload to Cloud Storage in production)
+        file_url = f"gs://appointments-audio/{appointment_id}/{file.filename}"
         
         # Save to Firestore
         if db:
+            print("appointment",appointment_id)
             appointment_ref = db.collection("appointments").document(appointment_id)
-            appointment_ref.update({
+            print("appointment",appointment_ref)
+            appointment_ref.set({
                 "doctor_audio": {
-                    "file_url": mock_file_url,
-                    "transcript": mock_transcript,
-                    "uploaded_at": firestore.SERVER_TIMESTAMP
+                    "file_url": file_url,
+                    "transcript": transcript,
+                    "uploaded_at": firestore.SERVER_TIMESTAMP,
+                    "filename": file.filename
                 }
-            })
+            }, merge=True)
         
         return {
-            "file_url": mock_file_url,
-            "transcript": mock_transcript
+            "file_url": file_url,
+            "transcript": transcript
         }
         
     except Exception as e:
@@ -85,6 +89,7 @@ async def run_diagnosis_agent(appointment_id: str):
             raise HTTPException(status_code=404, detail="Appointment not found")
         
         appointment_data = appointment_doc.to_dict()
+        # print("Appointment data:", appointment_data)
         
         # Get patient data
         patient_id = appointment_data.get("patient_id")
@@ -94,10 +99,11 @@ async def run_diagnosis_agent(appointment_id: str):
         patient_ref = db.collection("patients").document(patient_id)
         patient_doc = patient_ref.get()
         patient_data = patient_doc.to_dict() if patient_doc.exists else {}
-        
+        print("Patient data:", patient_data)
         # Get pre-assessment data
         pre_assessment = appointment_data.get("pre_assessment", {})
         structured_report = pre_assessment.get("structured_report", {})
+        print("Pre-assessment report:", structured_report)
         
         # Get audio transcript
         doctor_audio = appointment_data.get("doctor_audio", {})

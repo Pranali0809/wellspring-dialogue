@@ -45,16 +45,23 @@ const PatientDashboard = () => {
           </div>
 
           {/* Row 3: Appointments + Medical History */}
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-6">
             <PatientAppointments patientId={patientId || 'patient_1'} />
           </div>
-          <div className="lg:col-span-4">
-            <MedicalHistoryOverview />
-          </div>
-          <div className="lg:col-span-4">
+         
+          <div className="lg:col-span-6">
             <DoctorVisits />
           </div>
+
+         
+         
+          <div className="lg:col-span-8">
+            <MedicalHistoryOverview />
+            
+          </div>
+
         </div>
+      
 
         {/* Quick Actions Panel */}
         <QuickActions />

@@ -45,7 +45,7 @@ async def start_agent(appointment_id: str):
         
         # Store agent in memory
         active_sessions[agent_session_id] = agent
-        
+        print("Appoint:", appointment_id, "Session ID:", agent_session_id)
         # Store session info in Firestore
         if db:
             appointment_ref = db.collection("appointments").document(appointment_id)
