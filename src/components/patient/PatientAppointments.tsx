@@ -47,7 +47,7 @@ export const PatientAppointments = ({ patientId }: PatientAppointmentsProps) => 
           date: "2024-03-15",
           time: "10:00 AM",
           location: "Cardiology Clinic, Room 205",
-          doctor_name: "Dr. Sarah Johnson",
+          doctor_name: "Dr. Nikhil Sharma",
           doctor_specialty: "Cardiology",
           status: "scheduled",
           pre_assessment: {

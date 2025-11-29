@@ -194,7 +194,8 @@ export const DoctorVisits = () => {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <h4 className="font-semibold text-foreground">{visit.doctorName}</h4>
+                  {/* <h4 className="font-semibold text-foreground">{visit.doctorName}</h4> */}
+                  <h4 className="font-semibold text-foreground">Dr. Shirin Jejeebhoy</h4>
                   <Badge variant="secondary" className={`text-xs ${getSpecialtyColor(visit.specialty)}`}>
                     {visit.specialty}
                   </Badge>
